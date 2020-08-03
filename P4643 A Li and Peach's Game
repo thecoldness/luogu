@@ -1,0 +1,48 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+#define int long long
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1e4 + 5;
+int n , m , c , x , y , z; 
+double a[Max_n] , ans;
+inline bool cmp(double a , double b)
+{
+	return a > b;
+}
+signed main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		c = read() , a[i] = (double)c;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		x = read() , y = read() , z = read();
+		a[x] += (double)z / 2.0;
+		a[y] += (double)z / 2.0;
+	}
+	sort(a + 1 , a + n + 1 , cmp);
+	for(int i = 1 ; i <= n ; ++ i)
+		if(i % 2)	ans += a[i];
+		else ans -= a[i];
+	printf("%.0lf" , ans);
+	return 0;
+}
