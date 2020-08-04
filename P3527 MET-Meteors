@@ -1,0 +1,129 @@
+#include<cstdio>
+#include<cctype>
+#include<vector>
+#include<stack>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+const int Max_n = 3e5 + 5;
+int n , m , w[Max_n] , val[Max_n] , k , q[Max_n] , ans[Max_n] , hav[Max_n] , tmp[Max_n];
+vector<int> v[Max_n];
+struct node{
+	int l , r , val;
+}stone[Max_n];
+inline void add(int pos , int v)
+{
+	for(int i = pos ; i <= m ; i += lowbit(i))
+		val[i] += v;
+}
+inline int query(int pos)
+{
+	int ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += val[i];
+	return ret;
+}
+stack<int> st;
+void divide(int L , int R , int l , int r)
+{
+	if(l > r)	return;
+	if(L == R)
+	{
+		int ll = stone[L].l , rr = stone[L].r , va = stone[L].val;
+		if(ll <= rr)	add(ll , va) , add(rr + 1 , -va);
+		else add(ll , va) , add(1 , va) , add(rr + 1 , -va);
+		for(int i = l ; i <= r ; ++ i)
+		{
+			int now = q[i];
+			hav[now] = 0;
+			int sz = v[now].size();
+			for(int j = 0 ; j < sz ; ++ j)
+			{
+				hav[now] += query(v[now][j]);
+				if(w[q[i]] <= hav[q[i]])	
+				{
+					ans[q[i]] = L ;
+					break;
+				}
+			}
+		}
+		if(ll <= rr)	add(ll , -va) , add(rr + 1 , va);
+		else add(ll , -va) , add(1 , -va) , add(rr + 1 , va);
+		return;
+	}
+	int mid =(L + R) >> 1;
+	for(int i = L ; i <= mid ; ++ i)
+	{
+		st.push(i);
+		int ll = stone[i].l , rr = stone[i].r , va = stone[i].val;
+		if(ll <= rr)	add(ll , va) , add(rr + 1 , -va);
+		else add(ll , va) , add(1 , va) , add(rr + 1 , -va);
+	}
+	
+	int nowl = l - 1 , nowr = r + 1;
+	for(int i = l ; i <= r ; ++ i)
+	{
+		int now = q[i];
+		hav[now] = 0;
+		int sz = v[now].size();
+		for(int j = 0 ; j < sz ; ++ j)
+		{
+			hav[now] += query(v[now][j]);
+			if(hav[now] >= w[now])	break;
+		}
+		if(hav[q[i]] >= w[q[i]])	tmp[ ++ nowl] = q[i];
+		else tmp[ -- nowr] = q[i] , w[q[i]] -= hav[q[i]];
+	}
+	for(int i = l ; i <= r ; ++ i)
+		q[i] = tmp[i];
+	while(st.size())
+	{
+		int now = st.top();
+		int ll = stone[now].l , rr = stone[now].r , va = stone[now].val;
+		if(ll <= rr)	add(ll , -va) , add(rr + 1 , va);
+		else add(ll , -va) , add(1 , -va) , add(rr + 1 , va);
+		st.pop();
+	}
+	divide(L , mid , l , nowl);
+	divide(mid + 1 , R , nowr , r);
+}
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+		v[read()].push_back(i);
+	for(int i = 1 ; i <= n ; ++ i)
+		w[i] = read();
+	k = read();
+	for(int i = 1 ; i <= k ; ++ i)
+		stone[i].l = read() , stone[i].r = read() , stone[i].val = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		q[i] = i;
+	divide(1 , k , 1 , n);
+	for(int i = 1 ; i <= n ; ++ i)
+		if(ans[i])	printf("%d\n" , ans[i]);
+		else printf("NIE\n");
+	return 0;
+}
