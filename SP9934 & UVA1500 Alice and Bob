@@ -1,0 +1,59 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 55;
+int t , n , a[Max_n] , f[600000][Max_n] , tot , all;
+bool vis[600000][Max_n];
+inline int dfs(int i , int j)
+{
+	if(vis[i][j])	return f[i][j];
+	if(!j)	return i & 1; 
+	vis[i][j] = true;
+	if(i == 1)	return f[i][j] = dfs(0 , j + 1);
+	if(j && dfs(i , j - 1) == 0)	return f[i][j] = 1;
+	if(i && dfs(i - 1 , j) == 0)	return f[i][j] = 1;
+	if(i && j && dfs(i + 1 , j - 1) == 0)	return f[i][j] = 1;
+	if(!i && j >= 2 && dfs(2 , j - 2) == 0)	return f[i][j] = 1;
+	if(i && j >= 2 && dfs(i + 3 , j - 2) == 0)	return f[i][j] = 1;
+	return f[i][j] = 0;
+}
+int main()
+{
+	t = read();
+	for(int j = 1 ; j <= t ; ++ j)
+	{
+		n = read();
+		tot = all = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			a[i] = read();
+			if(a[i] == 1) ++ tot;
+			else all += a[i] + 1;
+		}
+		if(all)	-- all;
+		printf("Case #%d: " , j);
+		if(dfs(all , tot) == 0)	printf("Bob\n");
+		else printf("Alice\n");
+	}
+		
+	return 0;
+}
