@@ -1,0 +1,118 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<vector>
+#include<climits>
+#include<cstring>
+using namespace std;
+#define int long long
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 2e4 + 5;
+const int Max_k = 105;
+int n , k , d[Max_n] , c[Max_n] , s[Max_n] , w[Max_n] , f[Max_n][Max_k] , left[Max_n] , right[Max_n];
+vector<int> v[Max_n];
+struct node{
+	int l , r , minn , tag;
+}tree[Max_n << 2];
+inline void push_up(int tr)
+{
+	tree[tr].minn = min(tree[tr * 2].minn , tree[tr * 2 + 1].minn);
+}
+inline void push_down(int tr)
+{
+	if(!tree[tr].tag)	return;
+	tree[tr * 2].minn += tree[tr].tag , tree[tr * 2 + 1].minn += tree[tr].tag;
+	tree[tr * 2].tag += tree[tr].tag , tree[tr * 2 + 1].tag += tree[tr].tag;
+	tree[tr].tag = 0;
+}
+inline void build(int ll , int rr , int tr , int stdd)
+{
+	tree[tr].l = ll , tree[tr].r = rr , tree[tr].tag = 0;
+	if(ll == rr)
+	{
+		tree[tr].minn = f[ll][stdd];
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2 , stdd);
+	build(mid + 1 , rr , tr * 2 + 1 , stdd);
+	push_up(tr);
+}
+inline void change(int l , int r , int tr , int val)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		tree[tr].minn += val;
+		tree[tr].tag += val;
+		return;
+	}
+	push_down(tr);
+	change(l , r , tr * 2 , val);
+	change(l , r , tr * 2 + 1 , val);
+	push_up(tr);
+}
+inline int query(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return INT_MAX;
+	if(l <= ll && rr <= r)	return tree[tr].minn;
+	push_down(tr);
+	return min(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+}
+signed main()
+{
+	n = read() , k = read();
+	for(int i = 2 ; i <= n ; ++ i)
+		d[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		c[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		s[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		w[i] = read();
+	memset(f , 0x3f , sizeof(f));
+	for(int i = 0 ; i <= k + 1 ; ++ i)
+		f[0][i] = 0;
+	d[n + 1] = INT_MAX;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		left[i] = lower_bound(d + 1 , d + n + 2 , d[i] - s[i]) - d - 1;
+		right[i] = upper_bound(d , d + n + 2 , d[i] + s[i]) - d;
+		v[right[i]].push_back(i);
+	}
+	for(int j = 1 ; j <= k + 1 ; ++ j)
+	{
+		build(0 , n , 1 , j - 1);
+		for(int i = 1 ; i <= n + 1 ; ++ i)
+		{			
+			int sz = v[i].size();
+			for(int t = 0 ; t < sz ; ++ t)
+			{
+				int nex = v[i][t];
+				change(0 , left[nex] , 1 , w[nex]);
+			}
+			f[i][j] = query(0 , i - 1 , 1) + c[i];
+		}
+	}
+	printf("%lld" , f[n + 1][k + 1]);
+	return 0;
+}
