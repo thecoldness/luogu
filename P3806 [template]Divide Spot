@@ -1,0 +1,132 @@
+#include<cstdio>
+#include<vector>
+#include<stack>
+#include<cctype>
+#include<climits>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1e4 + 5;
+const int Max_m = 105;
+const int Max_k = 1e7 + 5;
+int n , m , u , c , w , k[Max_m] , siz[Max_n] , root , lag[Max_n] , tot , road[Max_n] , dis[Max_n];
+bool used[Max_n] , flag[Max_k] , found[Max_m];
+struct node{
+	int to , val;
+	node(int a , int b)
+	{
+		to = a , val = b;
+	}
+	node(){}
+};
+vector<node> v[Max_n];
+inline void add_edge(int x , int y , int z)
+{
+	v[x].push_back(node(y , z));
+	v[y].push_back(node(x , z));
+}
+inline void dfs_root(int now , int from , int sizz)
+{
+	siz[now] = 1;
+	int sz = v[now].size();
+	lag[now] = 0;
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to;
+		if(used[nex] || nex == from)	continue;
+		dfs_root(nex , now , sizz);
+		siz[now] += siz[nex];
+		lag[now] = max(lag[now] , siz[nex]);
+	}
+	lag[now] = max(lag[now] , sizz - siz[now]);
+	if(lag[now] < lag[root]) root = now;
+}
+inline void dfs_dis(int now , int from)
+{
+	road[ ++ tot] = dis[now];
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to , va = v[now][i].val;
+		if(nex == from || used[nex])	continue;
+		dis[nex] = dis[now] + va;
+		dfs_dis(nex , now);
+	}
+}
+stack<int> st;
+inline void cacl(int now)
+{
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to , va = v[now][i].val;
+		if(used[nex])	continue;
+		dis[nex] = va;
+		tot = 0;
+		dfs_dis(nex , now);
+		for(int j = 1 ; j <= tot ; ++ j)
+			for(int l = 1 ; l <= m ; ++ l)
+			{
+				if(k[l] < road[j])	continue;
+				found[l] |= flag[k[l] - road[j]];
+			}
+		for(int j = 1 ; j <= tot ; ++ j)
+		{
+			if(road[j] > Max_k)	continue;
+			st.push(road[j]);
+			flag[road[j]] = true;
+		}
+	}
+	while(st.size())
+		flag[st.top()] = false , st.pop();
+}
+inline void solve(int now)
+{
+	cacl(now);
+	used[root] = true;
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to;
+		if(used[nex])	continue;
+		root = 0;
+		dfs_root(nex , root , siz[nex]);
+		solve(root);
+	}
+}
+int main()
+{
+	n = read() , m = read();
+	flag[0] = true;
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		u = read() , c = read() , w = read();
+		add_edge(u , c , w);
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+		k[i] = read();
+	root = 0 , lag[0] = INT_MAX;
+	dfs_root(1 , 0 , n);
+	solve(root);
+	for(int i = 1 ; i <= m ; ++ i)
+		if(found[i])	printf("AYE\n");
+		else	printf("NAY\n");
+	return 0;
+}
