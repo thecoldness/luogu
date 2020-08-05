@@ -1,0 +1,75 @@
+#include<cstdio>
+#include<cctype>
+#include<vector>
+#include<algorithm>
+#define int long long
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+double ans;
+const int Max_n = 1e5 + 5;
+int n , q , c , from , to , siz[Max_n] , dep[Max_n] , r , w;
+vector<int> v[Max_n];
+struct node{
+	int from , to , val;
+}edge[Max_n];
+inline void add_edge(int x , int y)
+{
+	v[x].push_back(y);
+	v[y].push_back(x);
+}
+inline void dfs(int now , int from)
+{
+	siz[now] = 1;
+	dep[now] = dep[from] + 1;
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i];
+		if(nex == from)	continue;
+		dfs(nex , now);
+		siz[now] += siz[nex];
+	}
+}
+signed main()
+{
+	n = read();
+	c = n * (n - 1) * (n - 2) / 6;
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		edge[i].from = read() , edge[i].to = read() , edge[i].val = read();
+		add_edge(edge[i].from , edge[i].to);
+	}
+	dfs(1 , 0);
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		if(dep[edge[i].from] < dep[edge[i].to])	swap(edge[i].to , edge[i].from);
+		ans += (double)edge[i].val * siz[edge[i].from] * (n - siz[edge[i].from]) * (n - 2) / c;
+	}
+	q = read();
+	for(int i = 1 ; i <= q ; ++ i)
+	{
+		r = read() , w = read();
+		ans -= (double) edge[r].val * siz[edge[r].from] * (n - siz[edge[r].from]) * (n - 2) / c;
+		edge[r].val = w;
+		ans += (double) edge[r].val * siz[edge[r].from] * (n - siz[edge[r].from]) * (n - 2) / c;
+		printf("%.6lf\n" , ans);
+	}
+	return 0;
+}
