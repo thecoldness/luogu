@@ -1,0 +1,98 @@
+#include<cstdio>
+#include<cctype>
+#include<cstring>
+#include<queue>
+#include<algorithm>
+#include<climits>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1205;
+const int Max_m = 120005;
+struct node{
+	int to , nex , val;
+}edge[Max_m * 2];
+int hav[Max_n][Max_n] , n , m , s , t , dis[Max_n] , head[Max_n] , tot = 1 , u , v , w , beg[Max_n] , ans;
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot].to = y , edge[tot].val = z , edge[tot].nex = head[x] , head[x] = tot , hav[x][y] = tot;
+	edge[ ++ tot].to = x , edge[tot].val = 0 , edge[tot].nex = head[y] , head[y] = tot , hav[y][x] = tot;
+}
+inline bool bfs()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		dis[i] = INT_MAX;
+	queue<int> q;
+	while(q.size())	q.pop();
+	dis[s] = 0;
+	beg[s] = head[s];
+	q.push(s);
+	while(!q.empty())
+	{
+		int now = q.front();
+		q.pop();
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(edge[i].val > 0 && dis[nex] == INT_MAX)
+			{
+				dis[nex] = dis[now] + 1;
+				beg[nex] = head[nex];
+				q.push(nex);
+				if(nex == t)	return true;
+			}
+		}
+	}
+	return false;
+}
+inline int dfs(int x , int flow)
+{
+	if(x == t)	return flow;
+	int ret = 0;
+	for(int i = beg[x] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		beg[x] = i;
+		if((dis[nex] == dis[x] + 1) && edge[i].val > 0)
+		{
+			int k = dfs(nex , min(edge[i].val , flow));
+			if(k == 0)	dis[nex] = INT_MAX;
+			edge[i].val -= k;
+			edge[i ^ 1].val += k;
+			flow -= k;
+			ret += k;
+			if(flow == 0)	break;
+		}
+	}
+	return ret;
+}
+signed main()
+{
+	n = read() , m = read() , s = read() , t = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		u = read() , v = read() , w = read();
+		if(hav[u][v])	edge[hav[u][v]].val += w;
+		else add_edge(u , v , w);
+	}
+	while(bfs())
+		ans += dfs(s , INT_MAX);
+	printf("%lld" , ans);
+	return 0;
+}
