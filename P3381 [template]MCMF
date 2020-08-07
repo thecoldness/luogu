@@ -1,0 +1,99 @@
+#include<cstdio>
+#include<cctype>
+#include<queue>
+#include<cstring>
+#include<algorithm>
+#include<climits>
+#define int long long
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	bool flag = true;
+	char c;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 5e3 + 5;
+const int Max_m = 5e4 + 5;
+struct node{
+	int to , nex , val , cos;
+	node(int a , int b , int c , int d)
+	{
+		to = a , nex = b , val = c , cos = d;
+	}
+	node(){}
+}edge[Max_m * 2];
+int head[Max_n] , pre_dot[Max_n] , pre_edge[Max_n] , mincos , maxflow , n , m , s , t , u , v , w , f , tot = 1 , dis[Max_n];
+int flow[Max_n];
+bool vis[Max_n];
+inline bool spfa()
+{
+	memset(vis , false , sizeof(vis));
+	for(int i = 1 ; i <= n ; ++ i)
+		dis[i] = 0x3f3f3f3f;
+	dis[s] = 0;
+	flow[s] = INT_MAX;
+	queue<int> q;
+	while(q.size())	q.pop();
+	q.push(s);
+	while(!q.empty())
+	{
+		int now = q.front();
+		q.pop();
+		vis[now] = false;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to , va = edge[i].cos;
+			if(edge[i].val > 0 && dis[nex] > dis[now] + va)
+			{
+				pre_edge[nex] = i , pre_dot[nex] = now;
+				flow[nex] = min(flow[now] , edge[i].val);
+				dis[nex] = dis[now] + va;
+				if(vis[nex])	continue;
+				vis[nex] = true;
+				q.push(nex);
+			}
+		}
+	}
+	return dis[t] != 0x3f3f3f3f;
+}
+inline void cacl()
+{
+	int now = t;
+	while(now != s)
+	{
+		edge[pre_edge[now]].val -= flow[t];
+		edge[pre_edge[now] ^ 1].val += flow[t];
+		now = pre_dot[now];
+	}
+	mincos += flow[t] * dis[t];
+	maxflow += flow[t];
+}
+inline void add_edge(int x  , int y , int z , int e)
+{
+	edge[ ++ tot] = node(y , head[x] , z , e) , head[x] = tot;
+	edge[ ++ tot] = node(x , head[y] , 0 , -e) , head[y] = tot;
+}
+signed main()
+{
+	n = read() , m = read() , s = read() , t = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		u = read() , v = read() , w = read() , f = read();
+		add_edge(u , v , w , f);
+	}
+	while(spfa())	cacl();
+	printf("%lld %lld" , maxflow , mincos);
+	return 0;
+}
