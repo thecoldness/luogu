@@ -1,0 +1,62 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+using namespace std;
+#define int __int128
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x < 0)
+	{
+		x = -x;
+		putchar('-');
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+int a , b , c , ans , ret;
+inline bool check(int x)
+{
+	return x * (x + 1) <= (int)2 * ans;
+}
+signed main()
+{
+	a = read() , b = read() , c = read();
+	if(a < b)	swap(a , b);
+	if(c < a - b)	ans = b + c;
+	else	
+	{
+		c -= a - b;
+		ans = a + c / 2;
+	}
+	int l = 0 , r = 1e7;
+	while(l <= r)
+	{
+		int mid = (l + r) >> 1;
+		if(check(mid))
+		{
+			ret = mid;
+			l = mid + 1;
+		}
+		else r = mid - 1;
+	}
+	write(ret);
+	return 0;
+}
