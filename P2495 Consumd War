@@ -1,0 +1,169 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<climits>
+using namespace std;
+#define int long long
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 3e5 + 5;
+int n , m , ui , vi , wi , h[Max_n] , tot , k , tag[Max_n] , tim , fir[Max_n * 2] , dis[Max_n] , squ[Max_n * 2];
+int logm[1050000] , top , tp , head_vir[Max_n] , st[Max_n * 2] , head[Max_n] , tot_vir , dep[Max_n];
+struct Node{
+	int dot , dep;
+	Node(int a , int b)
+	{
+		dot = a , dep = b;
+	}
+	Node(){}
+	bool operator < (const Node & a)const
+	{
+		return dep < a.dep;
+	}
+}minn[Max_n * 4][20];
+int imp[Max_n];
+struct node{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node(){}
+}edge[Max_n * 2] , edge_vir[Max_n * 2];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+}
+void dfs_dis(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	squ[ ++ top] = now;
+	fir[now] = top;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dis[nex] = min(dis[now] , edge[i].val);
+		dfs_dis(nex , now);
+		squ[ ++ top] = now;
+	}
+}
+inline void build()
+{
+	for(int i = 1 ; i <= top ; ++ i)
+		minn[i][0] = Node(squ[i] , dep[squ[i]]);
+	for(int j = 1 ; j <= logm[top] + 1 ; ++ j)	
+		for(int i = 1 ; i <= top ; ++ i)
+			minn[i][j] = min(minn[i][j - 1] , minn[i + (1 << (j - 1))][j - 1]);
+}
+inline int lca(int x , int y)
+{
+	int l = fir[x] , r = fir[y];
+	if(l > r)	swap(l , r);
+	int len = r - l + 1;
+	return min(minn[l][logm[len]] , minn[r - (1 << logm[len]) + 1][logm[len]]).dot;
+}
+inline bool cmp(int a , int b)
+{
+	return fir[a] < fir[b];
+}
+inline void add_vir(int x , int y)
+{
+	edge_vir[ ++ tot_vir] = node(head_vir[x] , y , 0);
+	head_vir[x] = tot_vir;
+}
+inline void insert(int x)
+{
+	if(!tp)
+	{
+		head_vir[x] = 0;
+		st[ ++ tp] = x;
+		return;
+	}
+	int l = lca(x , st[tp]);
+	if(l != st[tp])
+	{
+		while(tp > 1 && fir[l] < fir[st[tp - 1]])	add_vir(st[tp - 1] , st[tp]) , -- tp;
+		if(fir[l] > fir[st[tp - 1]])
+		{
+			head_vir[l] = 0;
+			add_vir(l , st[tp]);
+			st[tp] = l;
+		}
+		else add_vir(l , st[tp]) , -- tp;
+	}
+	head_vir[x] = 0;
+	st[ ++ tp] = x;
+}
+int dfs_dp(int now , int from)
+{
+	if(imp[now] == tim && now != 1)	return dis[now];
+	int ret = 0;
+	for(int i = head_vir[now] ; i ; i = edge_vir[i].nex)
+	{
+		int nex = edge_vir[i].to;
+		if(nex == from)	continue;
+		ret += dfs_dp(nex , now);
+	}
+	return min(ret , dis[now]);
+}
+signed main()
+{
+	#ifdef MYDEBUG
+	freopen("1.in" , "r" , stdin);
+	#endif
+	n = read();
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		ui = read() , vi = read() , wi = read();
+		add_edge(ui , vi , wi);
+	}
+	for(int i = 2 ; i <= (1 << 20) ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	m = read();
+	dis[1] = LLONG_MAX >> 1;
+	dfs_dis(1 , 0);
+	build();
+	for(tim = 1 ; tim <= m ; ++ tim)
+	{
+		k = read() , tp = tot_vir = 0;
+		for(int i = 1 ; i <= k ; ++ i)
+			tag[i] = read() , imp[tag[i]] = tim;
+		tag[++ k] = 1;
+		sort(tag + 1 , tag + k + 1 , cmp);
+		for(int i = 1 ; i <= k ; ++ i)
+			if(tag[i] != tag[i - 1])	insert(tag[i]);
+		for(int i = 1 ; i < tp ; ++ i)
+			add_vir(st[i] , st[i + 1]);
+		write(dfs_dp(1 , 0));
+		putchar('\n');
+	}
+	return 0;
+}
