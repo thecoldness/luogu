@@ -1,0 +1,161 @@
+#include<cctype>
+#include<cstdio>
+#include<algorithm>
+#include<set>
+using namespace std;
+#define int long long
+typedef set<int>::iterator it;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 1e5 + 5;
+int squ[Max_n * 2] , logm[Max_n * 2] , dfn[Max_n] , rev[Max_n * 2] , n , m , head[Max_n] , tot , dis[Max_n] , ui , vi , wi;
+int dep[Max_n] , top , ans , opt;
+bool vis[Max_n];
+struct node{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node(){}
+}edge[Max_n * 2];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+}
+inline int aabs(int x)
+{
+	return max(x , -x);
+}
+void dfs(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	squ[ ++ top] = now;
+	dfn[now] = top;
+	rev[top] = now;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dis[nex] = dis[now] + edge[i].val;
+		dfs(nex , now);
+		squ[ ++ top] = now;
+	}
+}
+struct Node{
+	int dot , dep;
+	Node(int a , int b)
+	{
+		dot = a , dep = b;
+	}
+	Node(){}
+	bool operator < (const Node & a)const
+	{
+		return dep < a.dep;
+	}
+}f[Max_n * 2][20];
+inline void build()
+{
+	for(int i = 1 ; i <= top ; ++ i)
+		f[i][0] = Node(squ[i] , dep[squ[i]]);
+	for(int j = 1 ; j <= logm[top] ; ++ j)	
+		for(int i = 1 ; i <= top ; ++ i)
+			if(i + (1 << (j - 1)) <= top)	f[i][j] = min(f[i][j - 1] , f[i + (1 << (j - 1))][j - 1]);
+}
+set<int> s;
+inline int lca(int x , int y)
+{
+	int l = dfn[x] , r = dfn[y];
+	if(l > r)	swap(l , r);
+	int len = r - l + 1;
+	return min(f[l][logm[len]] , f[r - (1 << logm[len]) + 1][logm[len]]).dot;
+}
+inline int dist(int x , int y)
+{
+	int l = lca(x , y);
+	if(l == x || l == y)	return aabs(dis[x] - dis[y]);
+	return dis[x] + dis[y] - 2 * dis[l];
+}
+inline void reu(int x)
+{
+	it iter = s.find(x) , beg = s.begin() , lst = s.end();
+	-- lst;
+	if(iter == beg)	++ beg;
+	else if(iter == lst)	-- lst;
+	else 
+	{
+		beg = -- iter , ++ iter;
+		lst = ++ iter , -- iter;
+	}
+	ans += dist(rev[ * beg] , rev[ * lst]);
+	ans -= dist(rev[ * iter] , rev[ * beg]);
+	ans -= dist(rev[ * iter] , rev[ * lst]);
+	s.erase(iter);
+}
+inline void plu(int x)
+{
+	s.insert(x);
+	if(s.size() == 1)	return;
+	it iter = s.find(x) , beg = s.begin() , lst = s.end();
+	-- lst;
+	if(iter == beg)	++ beg;
+	else if(iter == lst)	-- lst;
+	else
+	{
+		beg = -- iter , ++ iter;
+		lst = ++ iter , -- iter;
+	}
+	ans -= dist(rev[ * beg] , rev[ * lst]);
+	ans += dist(rev[ * iter] , rev[ * lst]);
+	ans += dist(rev[ * iter] , rev[ * beg]);
+}
+signed main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		ui = read() , vi = read() , wi = read();
+		add_edge(ui , vi , wi);
+	}
+	for(int i = 2 ; i <= n * 2 ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	dfs(1 , 0);
+	build();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		opt = read();
+		if(vis[opt])	reu(dfn[opt]);
+		else plu(dfn[opt]);
+		write(ans);
+		putchar('\n');
+		vis[opt] ^= 1;
+	}
+	return 0;
+}
