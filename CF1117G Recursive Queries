@@ -1,0 +1,136 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+#include<vector>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(ll x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);	
+}
+const int Max_n = 1e6 + 5;
+int askl[Max_n] , askr[Max_n] , ls[Max_n] , rs[Max_n] , st[Max_n] , tp , conl[Max_n] , conr[Max_n] , n , p[Max_n];
+int q;
+ll ans[Max_n]; 
+struct node{
+	bool type;
+	int dot , bel;
+	node(bool a , int b , int c)
+	{
+		type = a , dot = b , bel = c;
+	}
+	node(){}
+};
+vector<node> v_l[Max_n] , v_r[Max_n];
+inline void ins(int x)
+{
+	int last = 0;
+	while(tp && p[x] > p[st[tp]])	last = st[tp] , -- tp;
+	ls[x] = last;
+	rs[st[tp]] = x;
+	st[ ++ tp] = x;
+}
+void build(int now , int ll , int rr)
+{
+	if(!now || now > n)	return;
+	conl[now] = ll , conr[now] = rr;
+	if(ll == rr)	return;
+	build(ls[now] , ll , now - 1);
+	build(rs[now] , now + 1 , rr);
+}
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+ll tree_1[Max_n] , tree_2[Max_n];
+inline void add_1(int pos , int val)
+{
+	for(int i = pos ; i <= Max_n ; i += lowbit(i))
+		tree_1[i] += val;
+}
+inline void add_2(int pos , int val)
+{
+	for(int i = pos ; i <= Max_n ; i += lowbit(i))
+		tree_2[i] += val;
+}
+inline ll query_1(int pos)
+{
+	ll ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += tree_1[i];
+	return ret;
+}
+inline ll query_2(int pos)
+{
+	ll ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += tree_2[i];
+	return ret;
+}
+signed main()
+{
+	n = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		p[i] = read()  , ins(i);
+	build(st[1] , 1 , n);
+	for(int i = 1 ; i <= q ; ++ i)
+		askl[i] = read();
+	for(int i = 1 ; i <= q ; ++ i)
+		askr[i] = read();
+	for(int i = 1 ; i <= q ; ++ i)
+	{
+		v_r[askl[i] - 1].push_back(node(false , askr[i] , i));
+		v_r[askr[i]].push_back(node(true , askr[i] , i));
+		v_l[askl[i] - 1].push_back(node(false , askl[i] , i));
+		v_l[askr[i]].push_back(node(true , askl[i] , i));
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		add_1(conr[i] , conr[i]) , add_2(conr[i] , 1);
+		int sz = v_r[i].size();
+		for(int j = 0 ; j < sz ; ++ j)
+		{
+			int belong = v_r[i][j].bel , pot = v_r[i][j].dot , k = (v_r[i][j].type ? 1 : -1);
+			ans[belong] += 1ull * k * (query_1(pot) + pot * (query_2(Max_n) - query_2(pot)));
+		}
+	}
+	memset(tree_1 , 0 , sizeof(tree_1)) , memset(tree_2 , 0 , sizeof(tree_2));
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		add_1(conl[i] , conl[i]) , add_2(conl[i] , 1);
+		int sz = v_l[i].size();
+		for(int j = 0 ; j < sz ; ++ j)
+		{
+			int belong = v_l[i][j].bel , pot = v_l[i][j].dot , k = (v_l[i][j].type ? 1 : -1);
+			ans[belong] -= 1ull * k * (query_1(Max_n) - query_1(pot) + pot * query_2(pot));
+		}
+	}
+	for(int i = 1 ; i <= q ; ++ i)
+		write(ans[i] + askr[i] - askl[i] + 1) , putchar(' ');
+	return 0;
+}
