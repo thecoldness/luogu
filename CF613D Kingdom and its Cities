@@ -1,0 +1,191 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 1e5 + 5;
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n * 2] , edge_vir[Max_n * 2];
+int n , q , k[Max_n] , tag[Max_n] , tim , head[Max_n] , head_vir[Max_n] , tp , st[Max_n * 2] , ui , vi , tot , tot_vir , squ[Max_n * 2];
+int logm[Max_n * 4], dfn[Max_n] , top , dep[Max_n] , num , ans;
+struct Node{
+	int dot , dep;
+	Node(int a , int b)
+	{
+		dot = a , dep = b;
+	}
+	Node(){}
+	bool operator < (const Node &a)const
+	{
+		return dep < a.dep;
+	}
+}f[Max_n * 4][20];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+void dfs_squ(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	squ[ ++ top] = now;
+	dfn[now] = top;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(edge[i].to == from)	continue;
+		dfs_squ(nex , now);
+		squ[ ++ top] = now;
+	}
+}
+inline void build()
+{
+	for(int i = 1 ; i <= top ; ++ i)
+		f[i][0] = Node(squ[i] , dep[squ[i]]);
+	for(int j = 1 ; j <= logm[top] + 1 ; ++ j)
+		for(int i = 1 ; i <= top ; ++ i)
+			f[i][j] = min(f[i][j - 1] , f[i + (1 << (j - 1))][j - 1]);
+}
+inline bool cmp(int a , int b)
+{
+	return dfn[a] < dfn[b];
+}
+inline int lca(int x , int y)
+{
+	int l = dfn[x] , r = dfn[y];
+	if(l > r)	swap(l , r);
+	int len = r - l + 1;
+	return min(f[l][logm[len]] , f[r - (1 << logm[len]) + 1][logm[len]]).dot;
+}
+inline void add_vir(int x , int y)
+{
+	edge_vir[ ++ tot_vir] = node(head_vir[x] , y);
+	head_vir[x] = tot_vir;
+	edge_vir[ ++ tot_vir] = node(head_vir[y] , x);
+	head_vir[y] = tot_vir;
+}
+inline void insert(int x)
+{
+	if(!tp)
+	{
+		st[ ++ tp] = x;
+		head_vir[x] = 0;
+		return;
+	}
+	int l = lca(st[tp] , x);
+	if(l != st[tp])
+	{
+		while(tp > 1 && dfn[l] < dfn[st[tp - 1]])	add_vir(st[tp - 1] , st[tp]) , -- tp;
+		if(dfn[l] > dfn[st[tp - 1]])
+		{
+			head_vir[l] = 0;
+			add_vir(l , st[tp]);
+			st[tp] = l;
+		}
+		else add_vir(l , st[tp]) , -- tp;
+	}
+	head_vir[x] = 0;
+	st[ ++ tp] = x;
+}
+inline bool check(int now)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+		if(tag[now] == tag[edge[i].to])	return false;
+	return true;
+}
+bool dfs_ans(int now , int from)
+{
+	int ret = 0;
+	for(int i = head_vir[now] ; i ; i = edge_vir[i].nex)
+	{
+		int nex = edge_vir[i].to;
+		if(nex == from)	continue;
+		if(dfs_ans(nex , now))	++ ret;
+	}
+	if(tag[now] != tim)
+		if(ret >= 2)
+		{
+			++ ans;
+			return false;
+		}
+		else if(ret)	return true;
+		else return false;
+	else
+	{
+		ans += ret;
+		return true;
+	}
+}
+int main()
+{
+	n = read();
+	for(int i = 2 ; i <= Max_n * 4 ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		ui = read() , vi = read();
+		add_edge(ui , vi);
+	}
+	dfs_squ(1 , 0);
+	build();
+	dep[0] = Max_n * 2;
+	q = read();
+	for(tim = 1 ; tim <= q ; ++ tim)
+	{
+		tot_vir = ans = tp = 0;
+		bool flag = false;
+		num = read();
+		for(int i = 1 ; i <= num ; ++ i)
+			k[i] = read() , tag[k[i]] = tim;
+		sort(k + 1 , k + num + 1 , cmp);
+		for(int i = 1 ; i <= num ; ++ i)
+			if(!check(k[i]))
+			{
+				write(-1);
+				putchar('\n');
+				flag = true;
+				break;
+			}
+		if(flag)	continue;
+		for(int i = 1 ; i <= num ; ++ i)
+			insert(k[i]);
+		for(int i = 1 ; i < tp ; ++ i)
+			add_vir(st[i] , st[i + 1]);
+		dfs_ans(st[1] , 0) , write(ans);
+		putchar('\n');
+	}
+	return 0;
+}
