@@ -1,0 +1,50 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(long long x)
+{
+	if(x > 9)	write(x / 10);
+	putchar('0'  + x % 10);
+}
+const int Max_n = 1e7 + 5;
+int st[Max_n] , ls[Max_n] , rs[Max_n] , n , tp , p[Max_n] , rev[Max_n];
+long long ansl , ansr;
+inline void ins(int x)
+{
+	int last = 0;
+	while(tp && p[x] < p[st[tp]])	last = st[tp] , -- tp;
+	rs[st[tp]] = x;
+	st[ ++ tp] = x;
+	ls[x] = last;
+}
+signed main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		p[i] = read() , ins(i);
+	for(long long i = 1 ; i <= n ; ++ i)
+		ansl ^= 1ull* i * (ls[i] + 1) , ansr ^= 1ull * i * (rs[i] + 1);
+	write(ansl);
+	putchar(' ');
+	write(ansr);
+	return 0;
+}
