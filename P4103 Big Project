@@ -1,0 +1,229 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<climits>
+using namespace std;
+#define int long long
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c =  getchar();
+	while(!isdigit(c))
+	{
+		if(c == '-')	flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 1e6 + 5;
+inline int aabs(int x)
+{
+	return max(x , -x);
+}
+struct node{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node(){}
+}edge[Max_n * 2] , edge_vir[Max_n * 2];
+int n , m , ui , vi , f[Max_n] , g[Max_n] , k , tag[Max_n] , tim , dep[Max_n] , logm[Max_n] , fa[Max_n][25];
+int tot , tot_vir , tp , st[Max_n * 2] , dfn[Max_n] , h[Max_n] , sum , min_dis , max_dis , siz[Max_n] , beg , head[Max_n];
+int head_vir[Max_n] , q;
+struct Node{
+	int dot , val;
+	Node(int a , int b)
+	{
+		dot = a , val = b;
+	}
+	Node(){}
+	bool operator < (const Node & a)const
+	{
+		return val < a.val;
+	}
+}minest[Max_n] , minner[Max_n] , tofa[Max_n];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+}
+void dfs_squ(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	dfn[now] = ++ tim;
+	fa[now][0] = from;
+	for(int i = 1 ; i <= 20 ; ++ i)
+		fa[now][i] = fa[fa[now][i - 1]][i - 1];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dfs_squ(nex , now);
+	}
+}
+inline bool cmp(int a , int b)
+{
+	return dfn[a] < dfn[b];
+}
+inline int lca(int x , int y)
+{
+	while(dep[x] < dep[y])
+		y = fa[y][logm[dep[y] - dep[x]]];
+	while(dep[y] < dep[x])
+		x = fa[x][logm[dep[x] - dep[y]]];
+	if(x == y)	return x;
+	for(int i = 20 ; i >= 0 ; -- i)
+	{
+		if(fa[x][i] == fa[y][i])	continue;
+		x = fa[x][i] , y = fa[y][i];
+	}
+	return fa[x][0];
+}
+inline void clean(int x)
+{
+	head_vir[x] = 0;
+	minest[x] = Node(0 , INT_MAX);
+	minner[x] = Node(0 , INT_MAX);
+	siz[x] = 0;
+}
+inline void add_vir(int x , int y , int z)
+{
+	edge_vir[ ++ tot_vir] = node(head_vir[x] , y , z) , head_vir[x] = tot_vir;
+	edge_vir[ ++ tot_vir] = node(head_vir[y] , x , z) , head_vir[y] = tot_vir;
+}
+inline int dist(int x , int y)
+{
+	int l = lca(x , y);
+	if(l == x || l == y)	return aabs(dep[x] - dep[y]);
+	return dep[x] + dep[y] - 2 * dep[l];
+}
+inline void insert(int x)
+{
+	if(!tp)
+	{
+		st[ ++ tp] = x;
+		clean(x);
+		return;
+	}
+	int l = lca(st[tp] , x);
+	if(l != st[tp])
+	{
+		while(tp > 1 && dfn[l] < dfn[st[tp - 1]])	add_vir(st[tp - 1] , st[tp] , dist(st[tp - 1] , st[tp])) , -- tp;
+		if(dfn[l] > dfn[st[tp - 1]])
+		{
+			clean(l);
+			add_vir(l , st[tp] , dist(l , st[tp]));
+			st[tp] = l;
+		}
+		else add_vir(l , st[tp] , dist(l , st[tp])) , -- tp;
+	}
+	clean(x);
+	st[ ++ tp] = x;
+}
+void dfs_dp(int now , int from)
+{
+	Node tmp1 = Node(0 , INT_MAX) , tmp2 = Node(0 , INT_MAX);
+	if(tag[now] == tim)	siz[now] = 1;
+	for(int i = head_vir[now] ; i ; i = edge_vir[i].nex)
+	{
+		int nex = edge_vir[i].to;
+		if(nex == from)	continue;
+		tofa[nex] = Node(now , edge_vir[i].val);
+		dfs_dp(nex , now);
+		siz[now] += siz[nex];
+		if(tmp1.val >= edge_vir[i].val + f[nex] * (tag[nex] != tim))	
+			tmp2 = tmp1	, tmp1 = Node(nex , edge_vir[i].val + f[nex] * (tag[nex] != tim));
+		else if(tmp2.val >= edge_vir[i].val + f[nex] * (tag[nex] != tim))
+			tmp2 = Node(nex , edge_vir[i].val + f[nex] * (tag[nex] != tim));
+	}
+	f[now] = tmp1.val , minest[now] = tmp1 , minner[now] = tmp2;
+}
+void dfs_g_sum(int now , int from)
+{	
+	g[now] = (tag[from] == tim ? 0 : g[from]);
+	g[now] += tofa[now].val;
+	if(now != minest[from].dot)	g[now] = min(g[now] , minest[from].val + tofa[now].val);
+	else g[now] = min(g[now] , minner[from].val + tofa[now].val);
+	for(int i = head_vir[now] ; i ; i = edge_vir[i].nex)
+	{
+		int nex = edge_vir[i].to;
+		if(nex == from)	continue;
+		sum += (siz[st[1]] - siz[nex]) * siz[nex] * edge_vir[i].val;
+		dfs_g_sum(nex , now);
+	}
+	if(tag[now] == tim)	min_dis = min(min_dis , min(g[now] , f[now]));
+}
+void dfs_dia(int now , int from , int val)
+{
+	if(val > max_dis)
+		max_dis = val , beg = now;
+	for(int i = head_vir[now] ; i ; i = edge_vir[i].nex)
+	{
+		int nex = edge_vir[i].to;
+		if(nex == from)	continue;
+		dfs_dia(nex , now , val + edge_vir[i].val);
+	}
+}
+inline void wre(int a , int b , int c)
+{
+	write(a) , putchar(' ');
+	write(b) , putchar(' ');
+	write(c) , putchar(' ');
+	putchar('\n');
+}
+signed main()
+{
+	#ifdef MYDEBUG
+	freopen("1.in" , "r" , stdin);
+	freopen("11.out" , "w" , stdout);
+	#endif
+	minest[0] = minner[0] = Node(0 , INT_MAX);
+	n = read();
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		ui = read() , vi = read();
+		add_edge(ui , vi , 1);
+	}
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	dfs_squ(1 , 0);
+	q = read();
+	for(tim = 1 ; tim <= q ; ++ tim)
+	{
+		k = read() , tp = tot_vir = sum = 0;
+		min_dis = INT_MAX , max_dis = 0;
+		for(int i = 1 ; i <= k ; ++ i)
+			h[i] = read() , tag[h[i]] = tim;
+		sort(h + 1 , h + k + 1 , cmp);
+		for(int i = 1 ; i <= k ; ++ i)
+			insert(h[i]);
+		for(int i = 1 ; i < tp ; ++ i)
+			add_vir(st[i] , st[i + 1] , dist(st[i] , st[i + 1]));
+		g[0] = INT_MAX;
+		dfs_dp(st[1] , 0);
+		dfs_g_sum(st[1] , 0);
+		dfs_dia(st[1] , 0 , 0);
+		max_dis = 0;
+		dfs_dia(beg , 0 , 0);
+		wre(sum , min_dis , max_dis);
+	}
+	return 0;
+}
