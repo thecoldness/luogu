@@ -1,0 +1,109 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#define int long long
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 2e5 + 5;
+const int MOD = 1e9 + 7;
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n * 2];
+int n , head[Max_n] , siz[Max_n] , tot = 1 , top , st[Max_n] , tp , ans = 1 , hav , fa[Max_n];
+int find(int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+inline void merge(int x , int y)
+{
+	fa[find(x)] = find(y);
+}
+bool vis[Max_n] , visf[Max_n];
+inline int quickpow(int x , int y)
+{
+	int ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret *= x , ret %= MOD;
+		y >>= 1;
+		x *= x , x %= MOD;
+	}
+	return ret;
+}
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+bool dfs(int now , int from)
+{
+	st[ ++ tp] = now;
+	vis[now] = true;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		if(i == (from ^ 1))	continue;
+		int nex =  edge[i].to;
+		if(vis[nex])
+		{
+			++ top;
+			while(st[tp] != nex)	++ siz[top] , -- tp;
+			++ siz[top] , -- tp;
+			return true;
+		}
+		if(dfs(nex , i)) 	return true;
+	}
+	-- tp;
+	return false;
+}
+signed main()
+{
+	int ui;
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)	
+		fa[i] = i;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		ui = read();
+		add_edge(i , ui);
+		merge(i , ui);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!visf[find(i)])	visf[find(i)] = true , tp = 0 , dfs(i , -1);
+	for(int i = 1 ; i <= top ; ++ i)
+		ans *= quickpow(2 , siz[i]) - 2 , ans %= MOD , hav += siz[i];
+	ans *= quickpow(2 , n - hav) , ans %= MOD;
+	write(ans);
+	return 0;
+}
