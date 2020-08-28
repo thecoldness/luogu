@@ -1,0 +1,77 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+#include<cmath>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+const int Max_n = 20;
+const double eps = 1e-7;
+double x[Max_n] , y[Max_n];
+int n , t , m , f[1 << Max_n];
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+inline int calc(int a , int b)
+{
+	int ret = (1 << n) - 1;
+	if(a == b)	return (ret ^ (1 << (a - 1)));
+	double x_fir = x[a] , x_sec = x[b] , y_fir = y[a] , y_sec = y[b];
+	if(x_fir == x_sec)	return (ret ^ (1 << (a - 1)));
+	double ax = (y_fir * x_sec / x_fir - y_sec) / (x_fir * x_sec - x_sec * x_sec);
+	if(ax >= 0)	return (ret ^ (1 << (a - 1)));
+	double bx = (y_fir - ax * x_fir * x_fir) / x_fir;
+	for(int i = 1 ; i <= n ; ++ i)
+		if(fabs(y[i] - ax * x[i] * x[i] - bx * x[i]) <= eps)	ret ^= 1 << (i - 1);
+	return ret;
+}
+int main()
+{
+	t = read();
+	while(t --)
+	{
+		n = read() , m = read();
+		memset(f , 0x3f , sizeof(f));
+		f[0] = 0;
+		for(int i= 1 ; i <= n ; ++ i)
+			scanf("%lf %lf" , x + i , y + i);
+		for(int i = 1 ; i < (1 << n) ; ++ i)
+		{
+			int beg;
+			for(int j = 1 ; j <= n ; ++ j)
+				if(i & (1 << (j - 1)))
+				{
+					beg = j;
+					break;
+				}
+			for(int j = beg ; j <= n ; ++ j)
+				if(i & (1 << (j - 1)))
+					f[i] = min(f[i] , f[i & calc(beg , j)] + 1);
+		}
+		write(f[(1 << n) - 1]);
+		putchar('\n');
+	}
+	return 0;
+}
