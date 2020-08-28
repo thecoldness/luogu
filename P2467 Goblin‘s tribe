@@ -1,0 +1,42 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 5e3 + 5;
+int c[Max_n][Max_n];
+ll f[Max_n];
+int main()
+{
+	int n , MOD;
+	n = read() , MOD = read();
+	for(int i = 0 ; i <= n ; ++ i)
+		c[i][0] = 1;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= i ; ++ j)
+			c[i][j] = (c[i - 1][j] + c[i - 1][j - 1]) % MOD;
+	f[0] = f[1] = f[2] = 1;
+	for(int i = 3 ; i <= n ; ++ i)
+		for(int j = 1 ; j < i ; j += 2)
+			f[i] += ((f[j] * c[i - 1][j] % MOD) * f[i - j - 1]) % MOD , f[i] %= MOD;
+	printf("%lld" , (f[n] * 2) % MOD);
+	return 0;
+}
