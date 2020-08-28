@@ -1,0 +1,112 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+inline void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar(x % 10 + '0');
+}
+const int Max_n = 1e5 + 5;
+int bel[Max_n] , dfn[Max_n] , low[Max_n] , siz[Max_n] , c1 , c2 , ans , head[Max_n] , tot , st[Max_n] , tp , top , in[Max_n] , tim;
+bool vis[Max_n];
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n * 2];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+void tarjan(int now)
+{
+	dfn[now] = low[now] = ++ tim;
+	st[ ++ tp] = now;
+	vis[now] = true;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(!dfn[nex])
+		{
+			tarjan(nex);
+			low[now] = min(low[now] , low[nex]);
+		}
+		else if(vis[nex])	low[now] = min(low[now] , dfn[nex]);
+	}
+	if(low[now] == dfn[now])
+	{
+		++ top;
+		while(st[tp] != now)
+		{
+			bel[st[tp]] = top;
+			vis[st[tp]] = false;
+			++ siz[top];
+			-- tp;
+		}
+		bel[st[tp]] = top;
+		vis[st[tp]] = false;
+		++ siz[top];
+		-- tp;
+	}
+}
+int main()
+{
+	int n , m , h , u[Max_n];
+	n = read() , m = read() , h = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		u[i] = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		c1 = read() , c2 = read();
+		if((u[c1] + 1) % h == u[c2])	add_edge(c1 , c2);
+		if((u[c2] + 1) % h == u[c1])	add_edge(c2 , c1);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!dfn[i])	tarjan(i);
+	for(int now = 1 ; now <= n ; ++ now)
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(bel[now] == bel[nex])	continue;
+			++ in[bel[now]];
+		}
+	siz[0] = Max_n;
+	for(int i = 1 ; i <= top ; ++ i)
+	{
+		if(in[i])	continue;
+		if(siz[i] < siz[ans])	ans = i;
+	}
+	write(siz[ans]);
+	putchar('\n');
+	for(int i = 1 ; i <= n ; ++ i)
+		if(bel[i] == ans)	write(i) , putchar(' ');
+	return 0;
+}
