@@ -1,0 +1,86 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+void write(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+const int Max_n = 1e5 + 5;
+int tree[Max_n] , a[Max_n] , sm[Max_n] , head[Max_n] , tot , ans[Max_n] , n;
+inline void add(int pos , int val)
+{
+	for(int i = pos ; i <= n ; i += lowbit(i))
+		tree[i] += val;
+}
+inline int query(int pos)
+{
+	int ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += tree[i];
+	return ret;
+}
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n];
+inline void add_edge(int a , int b)
+{
+	edge[ ++ tot] = node(head[a] , b);
+	head[a] = tot;
+}
+void dfs(int now)
+{
+	ans[now] -= query(n) - query(a[now]);
+	for(int i = head[now] ; i ; i = edge[i].nex)
+		dfs(edge[i].to);
+	ans[now] += query(n) - query(a[now]);
+	add(a[now] , 1);
+}
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = sm[i] = read();
+	sort(sm + 1 , sm + n + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = lower_bound(sm + 1 , sm + n + 1 , a[i]) - sm;
+	for(int i = 2 ; i <= n ; ++ i)
+		add_edge(read() , i);
+	dfs(1);
+	for(int i = 1 ; i <= n ; ++ i)
+		write(ans[i]) , putchar('\n');
+	return 0;
+}
