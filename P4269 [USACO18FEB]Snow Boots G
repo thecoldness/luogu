@@ -1,0 +1,113 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<cstring>
+#include<vector>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 2e5 + 5;
+int check[Max_n * 2] , n , b , a[Max_n] , ans[Max_n * 2] , tot , len;
+vector<int> v[Max_n];
+struct node{
+	int dep , len;
+	node(int a , int b)
+	{
+		dep = a , len = b;
+	}
+	node(){}
+}ask[Max_n];
+struct Node{
+	int l , r , lenl , lenr , len;
+	Node(int a , int b)
+	{
+		l = a , r = b , lenl = 0 , lenr = 0 , len = 0;
+	}
+	Node(){}
+	void clean()
+	{
+		lenl = lenr = len = 1;
+		return;
+	}
+}tree[Max_n << 2];
+void build(int ll , int rr , int tr)
+{
+	tree[tr] = Node(ll , rr);
+	if(ll == rr)	return;
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2);
+	build(mid + 1 , rr , tr * 2 + 1);
+}
+inline void push_up(int tr)
+{
+	tree[tr].len = max(tree[tr * 2].len , max(tree[tr * 2 + 1].len , tree[tr * 2].lenr + tree[tr * 2 + 1].lenl));
+	tree[tr].lenl = tree[tr * 2].lenl , tree[tr].lenr = tree[tr * 2 + 1].lenr;
+	if(tree[tr * 2].lenl == tree[tr * 2].r - tree[tr * 2].l + 1)	tree[tr].lenl += tree[tr * 2 + 1].lenl;
+	if(tree[tr * 2 + 1].lenr == tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1)	tree[tr].lenr += tree[tr * 2].lenr;
+}
+void change(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		tree[tr].clean();
+		return;
+	}
+	change(l , r , tr * 2);
+	change(l , r , tr * 2 + 1);
+	push_up(tr);
+}
+int main()
+{
+	n = read() , b = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read() , check[ ++ tot] = a[i];
+	for(int i = 1 ; i <= b ; ++ i)
+	{
+		int ui , vi;
+		ui = read() , vi = read();
+		check[ ++ tot] = ui;
+		ask[i] = node(ui , vi);
+	}
+	sort(check + 1 , check + tot + 1);
+	len = unique(check + 1 , check + tot + 1) - check;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		a[i] = lower_bound(check + 1 , check + len , a[i]) - check;
+		v[a[i]].push_back(i);
+	}
+	for(int i = 1 ; i <= b ; ++ i)
+		ask[i].dep = lower_bound(check + 1 , check + len , ask[i].dep) - check;
+	build(1 , n , 1);
+	for(int i = len ; i ; -- i)
+	{
+		ans[i] = tree[1].len;
+		int sz = v[i].size();
+		for(int j = 0 ; j < sz ; ++ j)
+			change(v[i][j] , v[i][j] , 1);
+	}
+	for(int i = 1 ; i <= b ; ++ i)
+	{
+		if(ans[ask[i].dep] >= ask[i].len)	putchar('0');
+		else putchar('1');
+		putchar('\n');
+	}
+	return 0;
+}
