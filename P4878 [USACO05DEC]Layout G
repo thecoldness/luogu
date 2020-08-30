@@ -1,0 +1,97 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<queue>
+#include<climits>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1e3 + 5;
+const int Max_d = 1e4 + 5;
+struct node{
+	int nex  ,to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node(){}
+}edge[Max_n * 2 + Max_d * 2];
+int head[Max_n] , tot , n , cnt[Max_n];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z);
+	head[x] = tot;
+}
+bool vis[Max_n];
+ll dis[Max_n];
+inline void spfa(int s)
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		dis[i] = INT_MAX;
+	dis[s] = 0;
+	queue<int> q;
+	q.push(s);
+	while(!q.empty())
+	{
+		int now = q.front();
+		q.pop();
+		vis[now] = false;
+		++ cnt[now];
+		if(cnt[now] > n)
+		{
+			printf("-1");
+			exit(0);
+		}
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to , va = edge[i].val;
+			if(dis[nex] <= dis[now] + va)	continue;
+			dis[nex] = dis[now] + va;
+			if(vis[nex])	continue;
+			vis[nex] = true;
+			q.push(nex);
+		}
+	}
+}
+int main()
+{
+	n = read();
+	int ml = read() , mr = read();
+	for(int i = 1 ; i <= ml ; ++ i)
+	{
+		int l = read() , r = read() , d = read();
+		if(l > r)	swap(l , r);
+		add_edge(l , r , d);
+	}
+	for(int i = 1 ; i <= mr ; ++ i)
+	{
+		int l = read() , r = read() , d = read();
+		if(l > r)	swap(l , r);
+		add_edge(r , l , -d);
+	}
+	for(int i = 1 ; i < n ; ++ i)
+		add_edge(i + 1 , i , 0);
+	for(int i = 1 ; i <= n ; ++ i)
+		add_edge(0 , i , 0);
+	spfa(0);
+	spfa(1);
+	if(dis[n] == (INT_MAX))	printf("-2");
+	else printf("%lld" , dis[n]);
+	return 0;
+}
