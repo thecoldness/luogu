@@ -1,0 +1,47 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? -res : res;
+}
+const int Max_n = 55;
+ll sum[Max_n] , a[Max_n] , ans;
+bool f[Max_n][Max_n];
+int n , k;
+int main()
+{
+	n = read() , k = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read() , sum[i] = sum[i - 1] + a[i];
+	for(int l = 60 ; l >= 0 ; -- l)
+	{
+		memset(f , false , sizeof(f));
+		f[0][0] = true;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= min(i , k) ; ++ j)
+				for(int m = 0 ; m < i ; ++ m)
+					f[i][j] |= (f[m][j - 1] && ((ans & (sum[i] - sum[m])) == ans) && ((sum[i] - sum[m]) & (1ull << l)));
+		if(f[n][k])	
+			ans ^= (1ull << l);
+	}
+	printf("%lld" , ans);
+	return 0;
+}
