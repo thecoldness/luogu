@@ -1,0 +1,120 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? -res : res;
+}
+void write(int x)
+{
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+inline void writeneg(int x)
+{
+	if(x < 0)
+	{
+		putchar('-');
+		x = -x;
+	}
+	write(x);
+}
+const int Max_n = 2e5 + 5;
+const int int_max = 1e6;
+char c[Max_n];
+int con[5][Max_n] , n , m , ui , vi;
+struct node{
+	int l , r , f[3][3];
+	node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	node(){}
+	int* operator [](int a)
+	{
+		return f[a];
+	}
+	void clean()
+	{
+		f[1][1] = f[2][1] = f[1][2] = f[2][2] = int_max;
+	}
+}tree[Max_n << 2];
+inline void push_up(int tr)
+{
+	int ls = tr * 2 , rs = tr * 2 + 1 , mid = tree[tr * 2].r;
+	for(int i = 1 ; i <= 2 ; ++ i)
+		for(int j = 1 ; j <= 2 ; ++ j)
+			for(int k = 1 ; k <= 2 ; ++ k)
+				if(con[k][mid])	tree[tr][i][j] = min(tree[tr][i][j] , tree[ls][i][k] + tree[rs][k][j] + 1);
+}
+void build(int ll , int rr , int tr)
+{
+	tree[tr] = node(ll , rr);
+	tree[tr].clean();
+	if(ll == rr)
+	{
+		for(int i = 1 ; i <= 2 ; ++ i)
+			tree[tr][i][i] = 0;
+		if(con[1][ll] && con[2][ll])	tree[tr][1][2] = tree[tr][2][1] = 1;
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2);
+	build(mid + 1 , rr , tr * 2 + 1);
+	push_up(tr);
+}
+node query(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	node ret;
+	ret.clean();
+	if(ll > r || rr < l)	return ret;
+	if(l <= ll && rr <= r)	return tree[tr];
+	int mid = (ll + rr) >> 1;
+	if(mid >= r)	return query(l  , r , tr * 2);
+	if(mid < l)	return query(l  , r , tr * 2 + 1);
+	node retl = query(l , r , tr * 2) , retr = query(l , r , tr * 2 + 1);
+	for(int i = 1 ; i <= 2 ; ++ i)
+		for(int j = 1 ; j <= 2 ; ++ j)
+			for(int k = 1 ; k <= 2 ; ++ k)
+				if(con[k][tree[tr * 2].r])	ret[i][j] = min(ret[i][j] , retl[i][k] + retr[k][j] + 1);
+	return ret;
+}
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= 2 ; ++ i)
+	{
+		scanf("%s" , c + 1);
+		for(int j = 1 ; j <= n ; ++ j)
+			con[i][j] = (c[j] == '.');
+	}
+	build(1 , n , 1);
+	while(m --)
+	{
+		ui = read() , vi = read();
+		int lu = ui % n , hu = ui / n + 1 , lv = vi % n , hv = vi / n + 1;
+		if(!lu)	-- hu , lu += n;
+		if(!lv)	-- hv , lv += n;
+		if(lu < lv)	swap(lu , lv) , swap(hu , hv);
+		int ans = query(lv , lu , 1)[hv][hu];
+		if(ans == int_max)	printf("-1\n");
+		else printf("%d\n" , ans);
+	}
+	return 0;
+}
