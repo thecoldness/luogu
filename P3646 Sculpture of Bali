@@ -1,0 +1,80 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<cstring>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+	    flag = (c == '-');
+	    c = getchar();
+	}
+	while(isdigit(c))
+	{
+	    res = res * 10 + (c ^ 48);
+	    c = getchar();
+	}
+	return flag ? -res : res;
+}
+const int Max_n = 2e3 + 5;
+typedef long long ll;
+int n , a , b;
+ll sum[Max_n] , ans;
+bool f[Max_n][Max_n];
+namespace thecold
+{
+	void solve()
+	{
+		for(int k = 49 ; k >= 0 ; -- k)
+    {
+        memset(f , false , sizeof(f));
+        f[0][0] = true;
+       for(int i =1 ; i <= n ; ++ i)
+            for(int j = 1 ; j <= min(i , b) ; ++ j)
+                for(int l = 0 ; l < i ; ++ l)
+                    f[i][j] |= f[l][j - 1] && !((sum[i] - sum[l]) & (1ull << k)) && !(~ans & (sum[i] - sum[l]));
+        bool mul = false;
+        for(int i = a ; i <= b ; ++ i)
+            if(f[n][i])
+            {  
+                mul = true;
+                break;
+            }
+        if(mul) ans ^= (1ull << k);
+    }
+    printf("%lld" , ans);
+	}
+	 
+}
+namespace Thecold
+{
+	void solve()
+	{
+		int g[Max_n];
+		for(int k = 49 ; k >= 0 ; -- k)
+		{
+			memset(g , 0x3f , sizeof(g));
+			g[0] = 0;
+			for(int i = 1 ; i <= n ; ++ i)
+				for(int j = 0 ; j < i ; ++ j)
+					if(!((sum[i] - sum[j]) & (1ull << k)) && !(~ans & (sum[i] - sum[j])))	g[i] = min(g[i] , g[j] + 1);
+			if(g[n] <= b)	ans ^= (1ull << k);
+		}
+		printf("%lld" , ans);
+	}
+}
+int main() 
+{
+    n = read() , a = read() , b = read();
+    for(int i = 1 ; i <= n ; ++ i)
+        sum[i] = sum[i - 1] + read();
+    ans = 1ull << 50 , --ans;
+    if(n <= 100)	thecold::solve();
+    else Thecold::solve();
+    return 0;
+}
