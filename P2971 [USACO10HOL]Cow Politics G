@@ -1,0 +1,125 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<vector>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? -res : res;
+}
+const int Max_n = 2e5 + 5;
+struct node{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node(){}
+}edge[Max_n * 2];
+int head[Max_n] , squ[Max_n * 2] , logm[Max_n * 2] , col[Max_n] , dep[Max_n] , dis[Max_n] , tim , dfn[Max_n];
+// dis is the max deepth of dot of each color
+int tot;
+struct Node{
+	int dot , dep;
+	Node(int a  , int b)
+	{
+		dot = a , dep = b;
+	}
+	Node(){}
+	bool operator < (const Node a)const
+	{
+		return dep < a.dep;
+	}
+}f[Max_n * 2][20];
+int n , k;
+vector<int> v[Max_n];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+void dfs(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	squ[ ++ tim] = now;
+	dfn[now] = tim;
+	if(dep[dis[col[now]]] < dep[now])	dis[col[now]] = now;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dfs(nex , now);
+		squ[ ++ tim] = now;
+	}
+}
+inline void build()
+{
+	for(int i = 1 ; i <= tim ; ++ i)
+		f[i][0] = Node(squ[i] , dep[squ[i]]);
+	for(int j = 1 ; j <= logm[tim] ; ++ j)
+		for(int i = 1 ; i <= tim ; ++ i)
+			if((i + (1 << j)) <= tim)	f[i][j] = min(f[i][j - 1] , f[i + (1 << (j - 1))][j - 1]);
+}
+inline int lca(int x , int y)
+{
+	int l = dfn[x] , r = dfn[y];
+	if(l > r)	swap(l , r);
+	int len = r - l + 1;
+	return min(f[l][logm[len]] , f[r - (1 << logm[len]) + 1][logm[len]]).dot;
+}
+inline int dist(int x , int y)
+{
+	int l = lca(x , y);
+	return dep[x] + dep[y] - 2 * dep[l];
+}
+int main()
+{
+	#ifdef MYDEBUG
+	freopen("1.txt" , "r" , stdin);
+	#endif
+	n = read() , k = read();
+	int root;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui = read() , vi = read();
+		v[ui].push_back(i);
+		col[i] = ui;
+		if(vi == 0)
+		{
+			root = i;
+			continue;
+		}
+		add_edge(vi , i);
+	}
+	dep[0] = -1;
+	dfs(root , 0);
+	for(int i = 2 ; i <= Max_n * 2 ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	build();
+	for(int i = 1 ; i <= k ; ++ i)
+	{
+		int now = dis[i] , ans = 0;
+		int sz = v[i].size();
+		for(int j = 0 ; j < sz ; ++ j)
+		{
+			int nex = v[i][j];
+			ans = max(ans , dist(now , nex));
+		}
+		printf("%d\n" , ans);
+	}
+	return 0;
+}
