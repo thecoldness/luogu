@@ -1,0 +1,66 @@
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+const int Max_n = 1e5 + 5;
+struct node{
+	int top , num[Max_n];
+	void clean()
+	{
+		memset(num , 0 , sizeof(num));
+		return;
+	}
+	int& operator[] (int x)
+	{
+		return num[x];
+	}
+}a , b , ans;
+char aa[Max_n] , bb[Max_n];
+bool flag;
+node operator - (node x , node y)
+{
+	node ret;
+	ret.clean();
+	int topx = x.top;
+	for(int i = 1 ; i <= topx ; ++ i)
+		ret[i] = x[i] - y[i];
+	for(int i = 1 ; i <= topx ; ++ i)
+		if(ret[i] < 0)	-- ret[i + 1] , ret[i] += 10;
+	ret.top = topx;
+	while(ret.top >= 2 && !ret[ret.top]) -- ret.top;
+	return ret;
+}
+int main()
+{
+	scanf("%s %s" , aa + 1 , bb + 1);
+	int topa = strlen(aa + 1) , topb = strlen(bb + 1);
+	if(topa < topb)	flag = true;
+	else if(topa == topb)
+		for(int i = topa ; i ; -- i)
+			if(aa[i] < bb[i])
+			{
+				flag = true;
+				break;
+			}
+	if(flag)
+	{
+		putchar('-');
+		a.top = topb , b.top = topa;
+		for(int i = 1 ; i <= a.top ; ++ i)
+			a[i] = bb[a.top - i + 1] - '0';
+		for(int i = 1 ; i <= b.top ; ++ i)
+			b[i] = aa[b.top - i + 1] - '0';
+	}
+	else
+	{
+		a.top = topa , b.top = topb;
+		for(int i = 1 ; i <= a.top ; ++ i)
+			a[i] = aa[a.top - i + 1] - '0';
+		for(int i = 1 ; i <= b.top ; ++ i)
+			b[i] = bb[b.top - i + 1] - '0';
+	}
+	ans = a - b;
+	for(int i = ans.top ; i ; -- i)
+		putchar('0' + ans[i]);
+	return 0;
+}
