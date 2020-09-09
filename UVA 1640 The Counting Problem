@@ -1,0 +1,75 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+typedef long long ll;
+int a , b , tot , num[20];
+ll ans[10];
+inline void split(int x)
+{
+	tot = 0;
+	while(x)
+		num[ ++ tot] = x % 10 , x /= 10;
+}
+struct node{
+	ll val , cnt;
+	node(ll a , ll b)
+	{
+		val = a , cnt = b;
+	}
+	node(){}
+}got[10][20];
+node dfs(int pos , int nu , bool flag , bool zero)
+{
+	if(pos <= 0)	return node(0 , 1);
+	if(!flag && !zero && got[nu][pos].cnt != -1)	return got[nu][pos];
+	node ret = node(0 , 0);
+	int maxnum = (flag ? ::num[pos] : 9);
+	for(int i = 0 ; i <= maxnum ; ++ i)
+	{
+		node cat = dfs(pos - 1 , nu , flag && (i == maxnum) , zero && (!i));
+		ret.val += cat.val;
+		if(!zero || i)	ret.cnt += cat.cnt;
+		if((i == nu) && (nu || (!zero && !i)))	ret.val += cat.cnt;	
+	}
+	return (!flag && !zero) ? got[nu][pos] = ret : ret;
+}
+int main()
+{
+	memset(got , -1 , sizeof(got));
+	a = read() , b = read();
+	while(a || b)
+	{
+		if(a > b)	swap(a , b);
+		split(b);
+		for(int i = 0 ; i <= 9 ; ++ i)
+			ans[i] = dfs(tot , i , true , true).val;
+		split(a - 1);
+		for(int i = 0 ; i <= 9 ; ++ i)
+			ans[i] -= dfs(tot , i , true , true).val;
+		for(int i = 0 ; i <= 9 ; ++ i)
+			printf("%lld " , ans[i]);
+		putchar('\n');
+		a = read() , b = read();
+	}
+	return 0;
+}
