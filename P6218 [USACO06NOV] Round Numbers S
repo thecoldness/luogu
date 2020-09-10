@@ -1,0 +1,53 @@
+#include<cstdio>
+#include<cctype>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+inline int read()
+{
+	int res  =0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+int a , b , num[40] , got[40][70];
+inline int dfs(int pos , int flag , int zero , int dis)
+{
+	if(pos < 0)	return (dis >= 30);
+	if(!flag && !zero && got[pos][dis] != -1)	return got[pos][dis];
+	int maxnum = (flag ? num[pos] : 1) , ret = 0;
+	if(zero)
+	{
+		ret += dfs(pos - 1 , flag && (maxnum == 0) , zero , dis);
+		if(maxnum == 1)	ret += dfs(pos - 1 , flag , false , dis - 1);
+	}
+	else
+		for(int i = 0 ; i <= maxnum ; ++ i)
+			ret += dfs(pos - 1 , flag && (i == maxnum) , false , dis + (i ? -1 : 1));
+	return (!flag && !zero) ? got[pos][dis] = ret : ret;
+}
+inline int solve(int x)
+{
+	for(int i = 30 ; i >= 0 ; -- i)
+		num[i] = ((x & (1 << i)) != 0);
+	return dfs(30 , true , true , 30);
+}
+int main()
+{
+	memset(got , -1 , sizeof(got));
+	a = read() , b = read();
+	if(a > b)	swap(a , b);
+	printf("%d" , solve(b) - solve(a - 1));
+	return 0;
+}
