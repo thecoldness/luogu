@@ -30,14 +30,15 @@ inline void split(int x)
 	while(x)
 		num[ ++ tot] = x % 10 , x /= 10;
 }
-struct node{
+struct node
+{
 	ll val , cnt;
 	node(ll a , ll b)
 	{
 		val = a , cnt = b;
 	}
-	node(){}
-}got[10][20];
+	node() {}
+} got[10][20];
 node dfs(int pos , int nu , bool flag , bool zero)
 {
 	if(pos <= 0)	return node(0 , 1);
@@ -49,7 +50,7 @@ node dfs(int pos , int nu , bool flag , bool zero)
 		node cat = dfs(pos - 1 , nu , flag && (i == maxnum) , zero && (!i));
 		ret.val += cat.val;
 		if(!zero || i)	ret.cnt += cat.cnt;
-		if((i == nu) && (nu || (!zero && !i)))	ret.val += cat.cnt;	
+		if((i == nu) && (nu || (!zero && !i)))	ret.val += cat.cnt;
 	}
 	return (!flag && !zero) ? got[nu][pos] = ret : ret;
 }
@@ -66,9 +67,9 @@ int main()
 		split(a - 1);
 		for(int i = 0 ; i <= 9 ; ++ i)
 			ans[i] -= dfs(tot , i , true , true).val;
-		for(int i = 0 ; i <= 9 ; ++ i)
+		for(int i = 0 ; i < 9 ; ++ i)
 			printf("%lld " , ans[i]);
-		putchar('\n');
+		printf("%lld\n" , ans[9]);
 		a = read() , b = read();
 	}
 	return 0;
