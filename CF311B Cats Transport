@@ -1,0 +1,92 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int n , m , p , d[Max_n] , head , tail , q[Max_n] , h[Max_n] , cnt;
+ll sum[Max_n] , f[105][Max_n] , t[Max_n] ;
+inline ll Y(int x)
+{
+	return f[cnt - 1][x] + sum[x];
+}
+inline ll K(int x)
+{
+	return t[x];
+}
+inline int X(int x)
+{
+	return x;
+}
+inline ll B(int j)
+{
+	return (ll)-t[j] * j + sum[j];
+}
+struct vec
+{
+	ll x , y;
+	vec (ll a , ll b)
+	{
+		x = a , y = b;
+	}
+	vec (int a)
+	{
+		x = X(a) , y = Y(a);
+	}
+	vec () {}
+};
+vec operator - (vec a , vec b)
+{
+	return vec(b.x - a.x , b.y - a.y);
+}
+inline ll cross(vec a , vec b)
+{
+	return (ll)a.x * b.y - a.y * b.x;
+}
+int main()
+{
+	n = read() , m = read() , p = read();
+	for(int i = 2 ; i <= n ; ++ i)
+		d[i] = d[i - 1] + read();
+	for(int i = 1 ; i <= m ; ++ i)
+		h[i] = read() , t[i] = read();
+	for(int i = 1 ; i <= m ; ++ i)
+		t[i] -= d[h[i]];
+	sort(t + 1 , t + m + 1);
+	for(int i = 1 ; i <= m ; ++ i)
+		sum[i] = sum[i - 1] + t[i];
+	memset(f[0] , 0x3f , sizeof(f[0]));
+	f[0][0] = 0;
+	for(int i = 1 ; i <= p ; ++ i)
+	{
+		head = 1 , tail = 0 , cnt = i;
+		for(int j = 1 ; j <= m ; ++ j)
+		{
+			while(head < tail && cross(vec(q[tail - 1]) - vec(q[tail]) , vec(q[tail]) - vec(j - 1)) <= 0)	-- tail;
+			q[ ++ tail] = j - 1;
+			while(head < tail && cross(vec(q[head]) - vec(q[head + 1]) , vec(1 , K(j))) >= 0)	++ head;
+			f[i][j] = Y(q[head]) - t[j] * q[head] - B(j);
+		}
+	}
+	printf("%lld" , f[p][m]);
+	return 0;
+}
