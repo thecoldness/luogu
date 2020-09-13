@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <random>
+#include <cmath>
+#include <chrono>
+#include <cstdlib>
+#include <ctime>
+#include <climits>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+mt19937 rnd;
+inline int getr(int l , int r)
+{
+	uniform_int_distribution<int> dis(l , r);
+	return dis(rnd);
+}
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 35;
+const double eps = 1e-6;
+int t , n , m , a[Max_n];
+ll ans;
+inline ll calc()
+{
+	ll ret = 0;
+	for(int i = 1 ; i <= n / 2 ; ++ i)
+		ret += a[i];
+	for(int i = n / 2 + 1 ; i <= n ; ++ i)
+		ret -= a[i];
+	return ret;
+}
+inline ll sa()
+{
+	random_shuffle(a + 1 , a + n + 1);
+	ll real = calc() , ret = abs(real);
+	double tem = 1e6 , k = 0.9;
+	while(tem > eps)
+	{
+		int x = getr(1 , n / 2) , y = getr(n / 2 + 1 , n);
+		ll bp_real = real;
+		real = real + 2 * a[y] - 2 * a[x];
+		ll tmpans = abs(real);
+		swap(a[x] , a[y]);
+		if(tmpans < ret)
+		{
+			ret = tmpans;
+		}
+		else if(exp((double)(ret - tmpans)) / tem <= 1.0 * rand() / RAND_MAX)//disagree to try bigger
+		{
+			swap(a[x] , a[y]);
+			real = bp_real;
+		}
+		tem *= k;
+	}
+	return ret;
+}
+int main()
+{
+	rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+	srand((ll)new char);
+	t = read();
+	while(t --)
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		if(n % 2)	a[ ++ n] = 0;
+		ans = INT_MAX;
+		ll ck = clock();
+		while(1.0 * ((ll)clock() - ck) / CLOCKS_PER_SEC < 0.045)
+			ans = min(sa() , ans);
+		printf("%lld\n" , ans);
+	}
+	return 0;
+}
