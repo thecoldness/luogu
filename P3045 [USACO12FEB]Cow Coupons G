@@ -1,0 +1,99 @@
+#include <cstdio>
+#include <algorithm>
+#include <queue>
+#include <cstring>
+#include <cctype>
+#include <vector>
+#include <climits>
+using namespace std;
+typedef long long ll;
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+struct node
+{
+	int val , id;
+	bool operator < (const node &a)const
+	{
+		return val > a.val;
+	}
+	node(int a , int b)
+	{
+		val = a , id = b;
+	}
+	node() {}
+};
+priority_queue<node> P , Q;
+priority_queue<int , vector<int> , greater<int> >PQ;
+const int Max_n = 5e4 + 5;
+int n , q[Max_n] , p[Max_n] , k , cnt;
+ll m , cot;
+bool vis[Max_n];
+inline void check()
+{
+	while(vis[P.top().id])
+		P.pop();
+	while(vis[Q.top().id])
+		Q.pop();
+}
+int main()
+{
+	n = read() , k = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		p[i] = read() , q[i] = read();
+		P.push(node(p[i] , i)) , Q.push(node(q[i] , i));
+	}
+	for(int i = 1 ; i <= k ; ++ i)
+		if(cot + Q.top().val <= m)
+		{
+			cot += Q.top().val , vis[Q.top().id] = true , ++ cnt;
+			PQ.push(p[Q.top().id] - q[Q.top().id]);
+			Q.pop();
+		}
+		else
+		{
+			printf("%d" , cnt);
+			return 0;
+		}
+	while(cot <= m)
+	{
+		check();
+		ll way2 = P.top().val , way1 = LLONG_MAX >> 1;
+		if(PQ.size())	way1 = PQ.top() + Q.top().val;
+		if(way1 < way2)
+		{
+			vis[Q.top().id] = true;
+			cot += way1;
+			PQ.pop();
+			PQ.push(p[Q.top().id] - q[Q.top().id]);
+			Q.pop();
+		}
+		else
+		{
+			cot += way2;
+			vis[P.top().id] = true;
+			P.pop();
+		}
+		++ cnt;
+		if(cnt == n)	break;
+	}
+	if(cot > m)	-- cnt;
+	printf("%d" , cnt);
+	return 0;
+}
