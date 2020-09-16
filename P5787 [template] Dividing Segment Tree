@@ -1,0 +1,130 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+using namespace std;
+const int Max_n = 1e5 + 5;
+inline int read()
+{
+	int res = 0 ;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+int n , m , k , fa[Max_n * 2] , tp , dep[Max_n * 2];
+struct node
+{
+	int from , to , depf , dept;
+	node(int a , int b , int c , int d)
+	{
+		from = a , to = b , depf = c , dept = d;
+	}
+	node() {}
+} st[Max_n * 2];
+inline int find(int x)
+{
+	while(fa[x] != x)	x = fa[x];
+	return fa[x];
+}
+struct Node
+{
+	int l , r;
+	Node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	Node() {}
+} tree[Max_n << 2];
+inline void build(int l , int r , int tr)
+{
+	tree[tr] = Node(l , r);
+	if(l == r)	return;
+	int mid = (l + r) >> 1;
+	build(l , mid , tr * 2);
+	build(mid + 1 , r , tr * 2 + 1);
+}
+vector<Node> v[Max_n << 2];
+bool ans[Max_n];
+inline void modify(int l , int r , int from , int to , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		v[tr].push_back(Node(from , to));
+		return;
+	}
+	modify(l , r , from , to , tr * 2);
+	modify(l , r , from , to , tr * 2 + 1);
+}
+inline void merge(int x , int y)
+{
+	int fx = find(x) , fy = find(y);
+	if(fx == fy)	return;
+	st[ ++ tp] = node(fx , fy , dep[fx] , dep[fy]);
+	if(dep[fx] < dep[fy])
+		fa[fx] = fy , dep[fy] = max(dep[fy] , dep[fx] + 1);
+	else
+		fa[fy] = fx , dep[fx] = max(dep[fx] , dep[fy] + 1);
+}
+inline void rec(int x)
+{
+	while(tp > x)
+	{
+		fa[st[tp].from] = st[tp].from , fa[st[tp].to] = st[tp].to;
+		dep[st[tp].from] = st[tp].depf , dep[st[tp].from] = st[tp].dept;
+		-- tp;
+	}
+}
+void dfs(int tr)
+{
+	int sz = v[tr].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int fi = v[tr][i].l , ti = v[tr][i].r;
+		merge(fi , ti + n);
+		merge(fi + n , ti);
+		if(find(fi) == find(fi + n) || find(ti) == find(ti + n))
+		{
+			for(int i = tree[tr].l ; i <= tree[tr].r ; ++ i)
+				ans[i] = false;
+			return;
+		}
+	}
+	if(tree[tr].l == tree[tr].r)	return;
+	int beg = tp;
+	dfs(tr * 2);
+	rec(beg);
+	dfs(tr * 2 + 1);
+	rec(beg);
+}
+int main()
+{
+	memset(ans , true , sizeof(ans));
+	n = read() , m = read() , k = read();
+	for(int  i = 1 ; i <= n * 2 ; ++ i)
+		fa[i] = i , dep[i] = 1;
+	build(1 , k , 1);
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read() , li = read() , ri = read();
+		if(li != ri)	modify(li + 1 , ri , ui , vi , 1);
+	}
+	dfs(1);
+	for(int i = 1 ; i <= k ; ++ i)
+		if(ans[i])	printf("Yes\n");
+		else printf("No\n");
+	return 0;
+}
