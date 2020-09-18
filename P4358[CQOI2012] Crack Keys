@@ -1,0 +1,129 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <chrono>
+#include <ctime>
+#include <random>
+using namespace std;
+typedef long long ll;
+inline ll read()
+{
+	ll res = 0;
+	bool flag = false;
+	char c;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+inline ll mul(ll x , ll y , ll MOD)
+{
+	ll ret = 0;
+	while(y)
+	{
+		if(y & 1)	ret += x , ret %= MOD;
+		x += x , x %= MOD;
+		y >>= 1;
+	}
+	return ret;
+}
+mt19937 rnd;
+inline ll getr(ll l , ll r)
+{
+	uniform_int_distribution<ll> dis(l , r);
+	return dis(rnd);
+}
+int prime[10] = {0 , 2 , 3 , 5 , 7 , 11 , 13 , 17};
+inline ll quickpow(ll x , ll y , ll MOD)
+{
+	ll ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret = mul(ret , x , MOD);
+		x = mul(x , x , MOD);
+		y >>= 1;
+	}
+	return ret;
+}
+inline bool Miller_Rabin(ll a)
+{
+	if(a <= 1)	return false;
+	ll t = a - 1 , k = 0;
+	while(!(t & 1))
+		t >>= 1 , ++ k;
+	for(int i = 1 ; i <= 7 ; ++ i)
+	{
+		if(a == prime[i])	return true;
+		ll base = quickpow(prime[i] , t , a);
+		for(int j = 1 ; j <= k ; ++ j)
+		{
+			ll nex = mul(base , base , a);
+			if(nex == 1 && base != 1 && base != -1)	return false;
+			base = nex;
+		}
+		if(base != 1)	return false;
+	}
+	return true;
+}
+inline ll gcd(ll a , ll b)
+{
+	return !b ? a : gcd(b , a % b);
+}
+inline ll f(ll a , ll b , ll MOD)
+{
+	return (mul(a , a , MOD) + b) % MOD;
+}
+inline ll Pollard_Rho(ll p)
+{
+	ll x = 1 , y = 1 , cnt , ply = 1;
+	ll c = getr(1 , p);
+	for(int k = 1 ;  ; k <<= 1 , y = x , ply = 1)
+	{
+		for(cnt = 1 ; cnt <= k ; ++ cnt)
+		{
+			x = f(x , c , p);
+			ply = mul(ply , abs(x - y) , p);
+			if(cnt % 127 == 0)
+			{
+				ll g = gcd(ply , p);
+				if(g > 1)	return g;
+			}
+		}
+		ll g = gcd(ply , p);
+		if(g > 1)	return g;
+	}
+}
+ll son , e , N , c , d , n , ansd , ansx;
+void exgcd(ll tmpa , ll tmpb)//a * ansd + b * ansx = 1
+{
+	if(!tmpb)
+	{
+		ansd = 1 , ansx = 0;
+		return;
+	}
+	exgcd(tmpb , tmpa % tmpb);
+	ll lastd = ansd , lastx = ansx;
+	ansd = lastx , ansx = lastd - tmpa / tmpb * lastx;
+}
+int main()
+{
+	rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+	e = read() , N = read() , c = read();
+	son = N;
+	while(son == N)
+		son = Pollard_Rho(N);
+	ll r = (son - 1) * (N / son - 1);
+	exgcd(e , r);
+	ansd = (ansd % r + r) % r;
+	n = quickpow(c , ansd , N);
+	printf("%lld %lld" , ansd , n);
+	return 0;
+}
