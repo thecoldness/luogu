@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <climits>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e7 + 5;
+int prime[Max_n] , vis[Max_n] , n , a[Max_n] , maxn , m , tot , rev[Max_n];
+ll cnt[Max_n];
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)	
+		a[i] = read() , maxn = max(maxn , a[i]);
+	for(int i = 2 ; i <= maxn ; ++ i)
+	{
+		if(!vis[i])
+		{
+			prime[ ++ tot] = i;
+			rev[i] = tot;
+			vis[i] = tot;
+		}
+		for(int j = 1 ; j <= tot && (ll) i * prime[j] <= maxn ; ++ j)
+		{
+			vis[i * prime[j]] = j;
+			if(i % prime[j] == 0)	break;
+		}
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		for(int j = vis[a[i]] ; (ll)prime[j] * prime[j] <= a[i] ; ++ j)
+			if(a[i] % prime[j] == 0)
+			{
+				++ cnt[j];
+				while(a[i] % prime[j] == 0)
+					a[i] /= prime[j];
+			}
+		if(a[i] != 1)	++ cnt[rev[a[i]]];
+	}
+	prime[ ++ tot] = INT_MAX;
+	for(int i = 1 ; i <= tot ; ++ i)
+		cnt[i] += cnt[i - 1];
+	m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int l = read() , r = read();
+		r = upper_bound(prime + 1 , prime + tot + 1 , r) - prime - 1;
+		l = lower_bound(prime + 1 , prime + tot + 1 , l) - prime - 1;
+		if(l >= r)	printf("0\n");
+		else printf("%lld\n" , cnt[r] - cnt[l]);
+	}
+	return 0;
+}
