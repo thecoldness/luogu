@@ -1,0 +1,59 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int MOD = 1e9 + 7;
+inline int quickpow(ll x , int y)
+{
+	ll ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret *= x , ret %= MOD;
+		x *= x , x %= MOD;
+		y >>= 1;
+	}
+	return ret;
+}
+const int Max_n = 1e5 + 5;
+char c[Max_n];
+int n , k;
+ll cnt;
+inline int ni(int x)
+{
+	return quickpow(x , MOD - 2);
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	scanf("%s" , c + 1) , k = read();
+	n = strlen(c + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+		if(c[i] == '0' || c[i] == '5')
+			cnt += quickpow(2 , i - 1) , cnt %= MOD;
+	ll t = quickpow(2 , n);
+	ll s = (ll)(quickpow(t , k) - 1) * ni(t - 1) % MOD;
+	cnt *= s , cnt %= MOD;
+	cnt = (cnt + MOD) % MOD;
+	printf("%lld" , cnt);
+	return 0;
+}
