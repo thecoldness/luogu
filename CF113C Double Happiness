@@ -1,0 +1,48 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <bitset>
+using namespace std;
+const int Max_n = 3e8 + 5;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+bitset<Max_n> vis;
+int l , r , prime[Max_n / 30 + Max_n / 300] , tot , ans;
+int main()
+{
+	l = read() , r = read();
+	for(int i = 2 ; i <= r ; ++ i)
+	{
+		if(!vis[i])
+		{
+			vis.set(i);
+			if(i % 4 == 1 && i >= l) ++ ans;
+			prime[ ++ tot] = i;
+		}
+		for(int j = 1 ; j <= tot && (ll) prime[j] * i <= r ; ++ j)
+		{
+			vis.set(i * prime[j]);
+			if(i % prime[j] == 0)	break;
+		}
+	}
+	if(l <= 2 && r >= 2)	++ ans;
+	printf("%d" , ans);
+	return 0;
+}
