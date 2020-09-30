@@ -1,0 +1,97 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <queue>
+#include <climits>
+using namespace std;
+typedef long long ll;
+typedef __int128 lll;
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+struct node
+{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node() {}
+} edge[Max_n << 2];
+ll b , dis[Max_n] , ans , n;
+int x , y , z , head[Max_n] , tot;
+bool vis[Max_n];
+inline void add_edge(int x , int y , int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z);
+	head[x] = tot;
+}
+struct Node
+{
+	ll id , dis;
+	Node(ll a , ll b)
+	{
+		id = a , dis = b;
+	}
+	Node() {}
+	bool operator < (const Node &a)const
+	{
+		return dis > a.dis;
+	}
+};
+inline void dijie()
+{
+	priority_queue<Node> q;
+	q.push(Node(1 , 1));
+	while(!q.empty())
+	{
+		ll now = q.top().id , de = q.top().dis;
+		q.pop();
+		if(vis[now])	continue;
+		vis[now] = true;
+		dis[now] = de;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(vis[nex] || (lll)de + edge[i].val > n)	continue;
+			q.push(Node(nex , de + edge[i].val));
+		}
+	}
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , x = read() , y = read() , z = read();
+	if(x == 1 || y == 1 || z == 1)
+	{
+		printf("%d" , n);
+		return 0;
+	}
+	for(int i = 0 ; i < x ; ++ i)
+		dis[i] = LLONG_MAX;
+	for(int i = 0 ; i < x ; ++ i)
+		add_edge(i , (i + y) % x , y) , add_edge(i , (i + z) % x , z);
+	dijie();
+	for(int i = 0 ; i < x ; ++ i)
+		if(dis[i] != LLONG_MAX)
+			ans += (n - dis[i]) / x + 1;
+	printf("%lld" , ans);
+	return 0;
+}
