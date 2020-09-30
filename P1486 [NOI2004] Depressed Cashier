@@ -1,0 +1,128 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <iostream>
+using namespace std;
+inline int read()
+{
+	int res  =0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = false;
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+typedef long long ll;
+const int Max_n = 3e5 + 5;
+int n , minn , tmp , fa[Max_n] , son[Max_n][2] , siz[Max_n] , cnt[Max_n] , root , tot , ans;
+ll val[Max_n];
+inline void push_up(int tr)
+{
+	siz[tr] = cnt[tr];
+	if(son[tr][0])	siz[tr] += siz[son[tr][0]];
+	if(son[tr][1])	siz[tr] += siz[son[tr][1]];
+}
+inline void rotate(int x)
+{
+	int fx = fa[x] , ffx = fa[fa[x]];//fx -> y , ffx ->z
+	bool type = son[fx][1] == x;
+	if(ffx)
+		son[ffx][son[ffx][1] == fx] = x;
+	fa[x] = ffx , fa[fx] = x , fa[son[x][!type]] = fx;
+	son[fx][type] = son[x][!type] , son[x][!type] = fx;
+	push_up(fx) , push_up(x);
+}
+inline void splay(int x , int goal)
+{
+	while(fa[x] != goal)
+	{
+		int fx = fa[x] , ffx = fa[fa[x]];
+		if(ffx != goal)
+		{
+			bool cx = son[fx][1] == x , cy = son[ffx][1] == fx;
+			if(cx != cy)
+				rotate(x);
+			else rotate(fx);
+		}
+		rotate(x);
+	}
+	push_up(x);
+	if(goal == 0)	root = x;
+}
+int find(int now , int rest)
+{
+	if(rest > siz[son[now][0]] && rest <= siz[son[now][0]] + cnt[now])	return val[now];
+	if(rest > siz[son[now][0]] + cnt[now])
+		return find(son[now][1] , rest - siz[son[now][0]] - cnt[now]);
+	return find(son[now][0] , rest);
+}
+int ins(int x , int &now , int from)
+{
+	if(!now)
+	{
+		int ret = now = ++ tot;
+		++ cnt[now] , fa[now] = from , val[now] = x;
+		push_up(now) , push_up(from);
+		return ret;
+	}
+	if(val[now] == x)
+	{
+		int ret = now;
+		++ cnt[now];
+		push_up(now) , push_up(from);
+		return ret;
+	}
+	int ret = ins(x , son[now][val[now] >= x] , now);
+	push_up(now);
+	return ret;
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , minn = read();
+	while(n --)
+	{
+		char type;
+		// scanf("%s" , &type);
+		cin >> type;
+		ll newcome = read();
+		if(type == 'I')
+		{
+			newcome += tmp;
+			if(newcome < minn)	continue;
+			++ ans;
+			splay(ins(newcome , root , 0) , 0);
+		}
+		if(type == 'A')
+		{
+			tmp -= newcome , minn -= newcome;
+		}
+		if(type == 'S')
+		{
+			minn += newcome , tmp += newcome;
+			int ret = ins(minn , root , 0);
+			splay(ret , 0);
+			fa[son[root][1]] = 0 , son[root][1] = 0;
+			-- cnt[root];
+			push_up(root);
+		}
+		if(type == 'F')
+		{
+			if(siz[root] < newcome)
+				printf("-1\n");
+			else printf("%d\n" , find(root , newcome) - tmp);
+		}
+	}
+	printf("%d" , ans - siz[root]);
+	return 0;
+}
