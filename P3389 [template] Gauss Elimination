@@ -1,0 +1,79 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+const int Max_n = 105;
+double f[Max_n][Max_n] , ans[Max_n];
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const double eps = 1e-5;
+int n;
+inline void change()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		if(f[i][i] != 0.0)	continue;
+		if(fabs(f[i + 1][i] - 0.0) <= eps)
+		{
+			printf("No Solution");
+			exit(0);
+		}
+		for(int j = 1 ; j <= n + 1 ; ++ j)
+			swap(f[i][j] , f[i + 1][j]);
+	}
+}
+inline void Gauss()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = i + 1 ; j <= n ; ++ j)
+		{
+			if(fabs(f[j][i] - 0.0) <= eps)
+			{
+				printf("No Solution");
+				exit(0);
+			}
+			double k = f[j][i] / f[i][i];
+			for(int l = i ; l <= n + 1 ; ++ l)
+				f[j][l] -= k * f[i][l];
+		}
+	for(int i = n ; i >= 1 ; -- i)
+	{
+		for(int j = i + 1 ; j <= n ; ++ j)
+			f[i][n + 1] -= ans[j] * f[i][j];
+		if(fabs(f[i][i] - 0.0) <= eps)
+		{
+			printf("No Solution");
+			exit(0);
+		}
+		ans[i] = f[i][n + 1] / f[i][i];
+	}
+}
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n + 1 ; ++ j)
+			f[i][j] = read();
+	change();
+	Gauss();
+	for(int i = 1 ; i <= n ; ++ i)
+		printf("%.2lf\n" , ans[i]);
+	return 0;
+}
