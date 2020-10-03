@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 405;
+const int MOD = 1e9 + 7;
+inline int quickpow(ll x , int y)
+{
+	ll ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret *= x , ret %= MOD;
+		x *= x , x %= MOD;
+		y >>= 1;
+	}
+	return ret;
+}
+inline int ni(int x)
+{
+	return quickpow(x , MOD - 2);
+}
+ll n , f[Max_n][Max_n] , a[Max_n] , ans[Max_n][Max_n];
+inline void Gauss_Jordan()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int now = i;
+		for(int j = i + 1 ; j <= n ; ++ j)
+			if(f[j][i] > f[now][i])	now = j;
+		swap(f[now] , f[i]) , swap(ans[now] , ans[i]);
+		if(f[now][i] == 0)
+		{
+			printf("No Solution");
+			exit(0);
+		}
+		int inv = ni(f[i][i]);
+		for(int j = 1 ; j <= n ; ++ j)
+		{
+			if(j == i)	continue;
+			int k = f[j][i] * inv % MOD;
+			for(int l = 1 ; l <= n ; ++ l)
+			{
+				f[j][l] -= (ll)k * f[i][l] % MOD , f[j][l] %= MOD;
+				ans[j][l] -= (ll)k * ans[i][l] % MOD , ans[j][l] %= MOD;
+			}
+		}
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int inv = ni(f[i][i]);
+		for(int j = 1 ; j <= n ; ++ j)
+			ans[i][j] *= inv , ans[i][j] %= MOD;
+	}
+}
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			f[i][j] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		ans[i][i] = 1;
+	Gauss_Jordan();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		for(int j = 1 ; j <= n ; ++ j)
+			printf("%lld " , (ans[i][j] + MOD) % MOD);
+		puts("");
+	}
+	return 0;
+}
