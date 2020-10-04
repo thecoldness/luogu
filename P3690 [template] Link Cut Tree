@@ -1,0 +1,131 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+inline int read()
+{
+	int res = 0 ;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int a[Max_n] , val[Max_n] , fa[Max_n] , son[Max_n][2] , st[Max_n] , tp;//0 -> left 1 -> right
+bool tag[Max_n];
+inline void push_up(int x)
+{
+	val[x] = val[son[x][0]] ^ val[son[x][1]] ^ a[x];
+}
+inline void push_down(int x)
+{
+	if(!tag[x])	return;
+	tag[x] = 0;
+	swap(son[x][0] , son[x][1]);
+	tag[son[x][0]] ^= 1 , tag[son[x][1]] ^= 1;
+}
+inline bool isroot(int x)
+{
+	return (son[fa[x]][0] != x) && (son[fa[x]][1] != x);
+}
+inline void rotate(int x)
+{
+	int fx = fa[x] , ffx = fa[fx];
+	push_down(fx) , push_down(x);
+	bool type = (son[fx][1] == x);
+	if(!isroot(fx))
+		son[ffx][fx == son[ffx][1]] = x;
+	fa[fx] = x , fa[x] = ffx , fa[son[x][!type]] = fx;
+	son[fx][type] = son[x][!type] , son[x][!type] = fx;
+	push_up(fx) , push_up(x);
+}
+inline void pushdw(int x)
+{
+	tp = 0;
+	st[ ++ tp] = x;
+	while(!isroot(x))
+		x = fa[x] , st[ ++ tp] = x;
+	while(tp)
+		push_down(st[tp --]);
+}
+inline void splay(int x)
+{
+	pushdw(x);
+	while(!isroot(x))
+	{
+		int fx = fa[x] , ffx = fa[fx];
+		if(!isroot(fx))
+		{
+			bool type1 = (son[fx][1] == x) , type2 = (son[ffx][1] == fx);
+			if(type2 == type1)
+				rotate(fx);
+			else rotate(x);
+		}
+		rotate(x);
+	}
+}
+inline void access(int x)
+{
+	for(int y = 0 ; x ; y = x , x = fa[x])
+		splay(x) , son[x][1] = y , push_up(x);
+}
+inline void make_root(int x)
+{
+	access(x) , splay(x);
+	tag[x] ^= 1;
+}
+inline int find_root(int x)
+{
+	access(x) , splay(x);
+	while(son[x][0])	x = son[x][0];
+	return x;
+}
+inline void link(int x , int y)
+{
+	make_root(x);
+	if(find_root(y) == x)	return;
+	fa[x] = y;
+}
+inline void split(int x , int y)
+{
+	make_root(x) , access(y) , splay(y);
+}
+inline void cut(int x , int y)
+{
+	split(x , y);
+	if(son[y][0] == x)	fa[x] = son[y][0] = 0;
+}
+int n , m;
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read();
+	while(m --)
+	{
+		int opt = read() , x = read() , y = read();
+		if(opt == 0)
+		{
+			split(x , y);
+			printf("%d\n" , val[y]);
+		}
+		if(opt == 1)
+			link(x , y);
+		if(opt == 2)
+			cut(x , y);
+		if(opt == 3)
+			splay(x) , a[x] = y , push_up(x);
+	}
+	return 0;
+}
