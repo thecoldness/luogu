@@ -1,0 +1,58 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+		c = getchar();
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int val[Max_n] , n , a[Max_n] , check[Max_n];
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+inline void add(int x , int val)
+{
+	for(int i = x ; i <= 1e5 ; i += lowbit(i))
+		::val[i] += val;
+}
+inline int query(int x)
+{
+	int ret = 0;
+	for(int i = x ; i ; i -= lowbit(i))
+		ret += val[i];
+	return ret;
+}
+int ans , bef[2005] , aft[2005];
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = check[i] = read();
+	sort(check + 1 , check + n + 1);
+	int len = unique(check + 1 , check + n + 1) - check;
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = lower_bound(check + 1 , check + len , a[i]) - check + 1;
+	for(int i = 1 ; i <= n ; ++ i)
+		bef[i] = query(a[i] - 1) , add(a[i] , 1);
+	memset(val , 0 , sizeof(val));
+	for(int i = n ; i ; -- i)
+		aft[i] = query(a[i] - 1) , add(a[i] , 1);
+	for(int i = 1 ; i <= n ; ++ i)
+		ans += min(bef[i] , aft[i]);
+	printf("%d" , ans);
+	return 0;
+}
