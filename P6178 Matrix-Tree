@@ -1,0 +1,104 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#define int long long
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int MOD = 1e9 + 7;
+const int Max_n = 305;
+int d[Max_n][Max_n] , a[Max_n][Max_n];//d is the Matrix for degree , a is the Matrix for graph
+int ans[Max_n][Max_n];
+int n , m , type;
+ll ret = 1;
+inline void add_edge_undirect(int x , int y , int z)
+{
+	d[x][x] += z , d[x][x] %= MOD;
+	d[y][y] += z , d[y][y] %= MOD;
+	a[x][y] += z , a[x][y] %= MOD;
+	a[y][x] += z , a[y][x] %= MOD;
+}
+inline void add_edge_direct(int x , int y , int z)
+{
+	d[y][y] += z , a[x][y] += z;
+	d[y][y] %= MOD , a[x][y] %= MOD;
+}
+inline int quickpow(ll x , ll y)
+{
+	ll ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret *= x , ret %= MOD;
+		y >>= 1;
+		x *= x , x %= MOD;
+	}
+	return ret;
+}
+inline int ni(int x)
+{
+	return quickpow(x , MOD - 2);
+}
+inline void Gauss()
+{
+	for(int i = 2 ; i <= n ; ++ i)
+	{
+		if(!ans[i][i])
+			for(int j = i + 1 ; j <= n ; ++ j)
+				if(ans[j][i])
+				{
+					swap(ans[i] , ans[j]);
+					ret = - ret;
+					break;
+				}
+		for(int j = i + 1 ; j <= n ; ++ j)
+		{
+			int k = (ll)ans[j][i] * ni(ans[i][i]) % MOD;
+			for(int l = i ; l <= n ; ++ l)
+				ans[j][l] -= (ll)k * ans[i][l] % MOD , ans[j][l] %= MOD;
+		}
+	}
+
+}
+signed main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read() , type = read();
+	if(type == 0)
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , xi = read();
+			add_edge_undirect(ui , vi , xi);
+		}
+	if(type == 1)
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , xi = read();
+			add_edge_direct(ui , vi , xi);
+		}
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			ans[i][j] = (d[i][j] - a[i][j]) % MOD;
+	Gauss();
+	for(int i = 2 ; i <= n ; ++ i)
+		ret *= ans[i][i] , ret %= MOD;
+	ret = (ret + MOD) % MOD;
+	printf("%lld\n" , ret);
+	return 0;
+}
