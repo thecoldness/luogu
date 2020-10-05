@@ -1,0 +1,137 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+inline int read()
+{
+	int res  =0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 105;
+const int Max_m = 1005;
+const int MOD = 31011;
+typedef long long ll;
+struct node
+{
+	int from , to , val;
+	node(int a , int b , int c)
+	{
+		from = a , to = b , val = c;
+	}
+	node() {}
+} graph[Max_m];
+int fa[Max_n] , check[Max_m] , tp , tot , cnt , ans = 1 , num[Max_m] , dep[Max_n];
+int l[Max_m] , r[Max_m];
+bool vis[Max_m];
+struct Node
+{
+	int from , to , depf , dept;
+	Node(int a , int b , int c , int d)
+	{
+		from = a , to = b , depf = c , dept = d;
+	}
+	Node() {}
+} st[Max_m];
+inline int find(int x)
+{
+	while(fa[x] ^ x)
+		x = fa[x];
+	return x;
+}
+inline void merge(int x , int y)
+{
+	int fx = x , fy = y;
+	if(fx == fy)	return;
+	st[ ++ tp] = Node(fx , fy , dep[fx] , dep[fy]);
+	if(dep[fx] > dep[fy])	swap(fx , fy);
+	fa[fx] = fy;
+}
+inline void recover()
+{
+	int fi = st[tp].from , ti = st[tp].to , dfi = st[tp].depf , dti = st[tp -- ].dept;
+	fa[fi] = fi , dep[fi] = dfi;
+	fa[ti] = ti , dep[ti] = dti;
+}
+void dfs(int now , int hav , int len)
+{
+	if(graph[now].val != len)
+	{
+		if(hav == num[len])	++ cnt , cnt %= MOD;
+		return;
+	}
+	dfs(now + 1 , hav , len);
+	int nowi = graph[now].from , toi = graph[now].to;
+	int fx = find(nowi) , fy = find(toi);
+	if(fx != fy)
+	{
+		merge(fx , fy);
+		dfs(now + 1 , hav + 1 , len);
+		recover();
+	}
+}
+inline bool cmp(node a , node b)
+{
+	return a.val < b.val;
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	int n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read() , wi = read();
+		graph[i] = node(ui , vi , wi);
+		check[i] = wi;
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	sort(graph + 1 , graph + m + 1 , cmp);
+	sort(check + 1 , check + m + 1);
+	int len = unique(check + 1 , check + m + 1) - check;
+	for(int i = 1 ; i <= m ; ++ i)
+		graph[i].val = lower_bound(check + 1 , check + len , graph[i].val) - check;
+	for(int i = 1 ; i <= m ; ++ i)
+		check[i] = graph[i].val;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int fi = graph[i].from , ti = graph[i].to , fx , fy;
+		if((fx = find(fi)) == (fy = find(ti)))	continue;
+		merge(fx , fy) , ++ tot , ++ num[graph[i].val] , vis[i] = true;
+	}
+	if(tot != n - 1)
+	{
+		printf("0");
+		exit(0);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	for(int i = m ; i ; -- i)
+		if(graph[i].val == graph[i + 1].val)	r[i] = r[i + 1];
+		else r[i] = i;
+	for(int i = 1 ; i <= m ; i = r[i] + 1)
+	{
+		cnt = 0;
+		if(num[graph[i].val] == 0)	continue;
+		dfs(i , 0 , graph[i].val);
+		ans *= cnt , ans %= MOD;
+		for(int j = i ; j <= r[i] ; ++ j)
+			if(vis[j])
+				merge(find(graph[j].from) , find(graph[j].to));
+	}
+	printf("%d" , ans);
+	return 0;
+}
