@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+const int Max_d = 25;
+ll f[Max_n][Max_d] , g[Max_n][Max_d] , n , head[Max_n] , tot , s , k;
+ll ans;
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n * 2];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+void dfs(int now , int from)
+{
+	++ g[now][0];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dfs(nex , now);
+		for(int j = 0 ; j < k ; ++ j)
+			f[now][j + 1] += f[nex][j] , g[now][j + 1] += g[nex][j];
+	}
+	if(g[now][k])
+	{
+		int ti = (g[now][k] + s - 1) / s;
+		ans += ti;
+		f[now][0] = ti * s;
+	}
+	for(int i = 0 ; i <= k ; ++ i)
+	{
+		int j = k - i;
+		int d = min(f[now][i] , g[now][j]);
+		f[now][i] -= d , g[now][j] -= d;
+	}
+	for(int i = 0 ; i < k ; ++ i)
+	{
+		int j = k - i - 1;
+		int d = min(f[now][i] , g[now][j]);
+		f[now][i] -= d , g[now][j] -= d;
+	}
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , s = read() , k = read();
+	for(int i = 1 ; i < n ; ++ i)
+		add_edge(read() , read());
+	dfs(1 , 0);
+	for(int i = 0 ; i <= k ; ++ i)
+		for(int j = k - i ; j >= 0 ; -- j)
+		{
+			int d = min(f[1][i] , g[1][j]);
+			f[1][i] -= d , g[1][j] -= d;
+		}
+	int num = 0;
+	for(int i = 0 ; i <= k ; ++ i)
+		num += g[1][i];
+	ans += (num + s - 1) / s;
+	printf("%lld" , ans);
+	return 0;
+}
