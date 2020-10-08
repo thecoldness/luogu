@@ -1,0 +1,159 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+inline int read()
+{
+	int res =  0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e4 + 5;
+
+struct node
+{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node() {}
+} edge[Max_n * 4] , edge_rs[Max_n * 4];
+
+int head[Max_n] , head_rs[Max_n * 2] , n , fa[Max_n * 2][20] , q , dot[Max_n * 2] , rel , tree_dis[Max_n];
+int logm[Max_n * 2] , tot , tot_rs , m , st[Max_n] , tp , dis[Max_n * 2] , dep[Max_n * 2];
+
+bool vis[Max_n];
+
+inline void add_edge(const int x , const int y , const int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+}
+
+inline void add_edge_rs(const int x , const int y , const int z)
+{
+	edge_rs[ ++ tot_rs] = node(head_rs[x] , y , z);
+	head_rs[x] = tot_rs;
+}
+
+void dfs_rs(const int now , const int from)
+{
+	st[ ++ tp] = now;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		if(tree_dis[nex])
+		{
+			if(tree_dis[nex] > tree_dis[now])	continue;
+			++ n;
+			int alldis = tree_dis[now] - tree_dis[nex] + edge[i].val , tmp = tp;
+			dot[n] = alldis;
+			while(st[tmp] != nex)
+			{
+				vis[st[tmp]] = true;
+				int de = min(tree_dis[st[tmp]] - tree_dis[nex] , alldis - tree_dis[st[tmp]] + tree_dis[nex]);
+				add_edge_rs(n , st[tmp] , de);
+				-- tmp;
+			}
+			add_edge_rs(nex , n , 0);
+			continue;
+		}
+		tree_dis[nex] = tree_dis[now] + edge[i].val , fa[nex][0] = edge[i].val;
+		dfs_rs(nex , now);
+	}
+	if(!vis[now] && (tp - 1))
+		add_edge_rs(st[tp - 1] , now , fa[now][0]);
+	--tp;
+}
+
+void dfs_tree(const int now , const int from)
+{
+	dep[now] = dep[from] + 1 , fa[now][0] = from;
+	for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+		fa[now][i] = fa[fa[now][i - 1]][i - 1];
+	for(int i = head_rs[now] ; i ; i = edge_rs[i].nex)
+	{
+		int nex = edge_rs[i].to;
+		if(nex == from)	continue;
+		dis[nex] = dis[now] + edge_rs[i].val;
+		dfs_tree(nex , now);
+	}
+}
+
+inline int lca(int x , int y)
+{
+	while(dep[x] > dep[y])
+		x = fa[x][logm[dep[x] - dep[y]]];
+	while(dep[y] > dep[x])
+		y = fa[y][logm[dep[y] - dep[x]]];
+	if(x == y)	return x;
+	for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+	{
+		if(fa[x][i] == fa[y][i])	continue;
+		x = fa[x][i] , y = fa[y][i];
+	}
+	return fa[x][0];
+}
+
+inline pair<int , int> dist (int x , int y)
+{
+	while(dep[x] > dep[y])
+		x = fa[x][logm[dep[x] - dep[y]]];
+	while(dep[y] > dep[x])
+		y = fa[y][logm[dep[y] - dep[x]]];
+	for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+	{
+		if(fa[x][i] == fa[y][i])	continue;
+		x = fa[x][i] , y = fa[y][i];
+	}
+	return make_pair(x , y);
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	rel = n = read() , m = read() , q = read();
+	for(int i = 2 ; i <= 2 * n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , ti = read() , vi = read();
+		add_edge(ui , ti , vi);
+	}
+	tree_dis[1] = 1;
+	dfs_rs(1 , 0);
+	dfs_tree(1 , 0);
+	while(q --)
+	{
+		int ui = read() , vi = read();
+		int l = lca(ui , vi);
+		if(l <= rel)
+		{
+			printf("%d\n" , dis[ui] + dis[vi] - 2 * dis[l]);
+			continue;
+		}
+		pair<int , int> ret = dist(ui , vi);
+		int de = dis[ui] + dis[vi] - dis[ret.first] - dis[ret.second];
+		de += min(abs(tree_dis[ret.first] - tree_dis[ret.second]) , dot[l] - abs(tree_dis[ret.first] - tree_dis[ret.second]));
+		printf("%d\n" , de);
+	}
+	return 0;
+}
