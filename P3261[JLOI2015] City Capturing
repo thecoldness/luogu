@@ -1,0 +1,201 @@
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <cctype>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 3e5 + 5;
+
+vector<int> v[Max_n];
+
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n << 1];
+
+int n , m , root[Max_n] , son[Max_n][2] , dis[Max_n] , beg[Max_n] , logm[Max_n];
+int fa[Max_n] , a[Max_n] , head[Max_n] , tot , cnt[Max_n] , dep[Max_n] , tree_fa[Max_n][20];
+
+ll val[Max_n] , tag_plu[Max_n] , tag_mul[Max_n];
+ll h[Max_n] , s[Max_n];
+
+bool vis[Max_n];
+
+int find(const int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+
+inline void add_edge(const int x , const int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+
+inline void push_down(const int now)
+{
+	if(tag_mul[now] != 1)
+	{
+		val[son[now][0]] *= tag_mul[now] , val[son[now][1]] *= tag_mul[now];
+		tag_mul[son[now][0]] *= tag_mul[now] , tag_mul[son[now][1]] *= tag_mul[now];
+		tag_plu[son[now][0]] *= tag_mul[now] , tag_plu[son[now][1]] *= tag_mul[now];
+		tag_mul[now] = 1;
+	}
+	if(tag_plu[now] != 0)
+	{
+		val[son[now][0]] += tag_plu[now] , val[son[now][1]] += tag_plu[now];
+		tag_plu[son[now][0]] += tag_plu[now] , tag_plu[son[now][1]] += tag_plu[now];
+		tag_plu[now] = 0;
+	}
+}
+
+inline int merge(int x , int y)
+{
+	if(!x || !y)	return x + y;
+	if(val[x] > val[y])
+		swap(x , y);
+	push_down(x) , push_down(y);
+	son[x][1] = merge(son[x][1] , y);
+	fa[son[x][1]] = x;
+	if(dis[son[x][1]] + 1 > dis[son[x][0]])
+		swap(son[x][1] , son[x][0]);
+	dis[x] = dis[son[x][1]] + 1;
+	return x;
+}
+
+void dfs(const int now , const int from)
+{
+	dep[now] = dep[from] + 1;
+	tree_fa[now][0] = from;
+	for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+		tree_fa[now][i] = tree_fa[tree_fa[now][i - 1]][i - 1];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		dfs(nex , now);
+		if(!find(root[nex]))	continue;
+		if(find(root[nex]) && find(root[now]))
+			fa[find(root[now])] = fa[find(root[nex])] = merge(find(root[now]) , find(root[nex]));
+		if(find(root[nex]) && !find(root[now]))
+			root[now] = find(root[nex]);
+	}
+	int tmp = find(root[now]);
+	while((val[tmp] < h[now]) && tmp)
+	{
+		v[now].push_back(tmp);
+		push_down(tmp);
+		fa[son[tmp][0]] = son[tmp][0] , fa[son[tmp][1]] = son[tmp][1];
+		fa[tmp] = merge(son[tmp][0] , son[tmp][1]);
+		tmp = find(root[now]);
+	}
+	if(a[now] == 0)
+		val[tmp] += s[now] , tag_plu[tmp] += s[now];
+	else
+	{
+		push_down(tmp);
+		val[tmp] *= s[now] , tag_mul[tmp] *= s[now];
+	}
+}
+
+inline int lca(int x , int y)
+{
+	while(dep[x] > dep[y])
+		x = tree_fa[x][logm[dep[x] - dep[y]]];
+	while(dep[y] > dep[x])
+		y = tree_fa[y][logm[dep[y] - dep[x]]];
+	if(x == y)	return x;
+	for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+	{
+		if(tree_fa[x][i] == tree_fa[y][i])	continue;
+		x = tree_fa[x][i] , y = tree_fa[y][i];
+	}
+	return tree_fa[x][0];
+}
+
+inline int dist(const int x , const int y)
+{
+	int l = lca(x , y);
+	return dep[x] + dep[y] - dep[l] * 2;
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		h[i] = read();
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 2 ; i <= n ; ++ i)
+	{
+		add_edge(read() , i);
+		a[i] = read() , s[i] = read();
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+		fa[i] = i;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		val[i] = read() , beg[i] = read();
+		tag_mul[i] = 1;
+		if(!find(root[beg[i]]))	root[beg[i]] = i;
+		else fa[find(root[beg[i]])] = fa[find(i)] = merge(find(root[beg[i]]) , find(i));
+	}
+	dfs(1 , 0);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int sz = v[i].size();
+		printf("%d\n" , sz);
+		for(int j = 0 ; j < sz ; ++ j)
+		{
+			vis[v[i][j]] = true;
+			cnt[v[i][j]] = dist(beg[v[i][j]] , i);
+		}
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		if(!vis[i])
+			printf("%d\n", dep[beg[i]]);
+		else printf("%d\n" , cnt[i]);
+	}
+	return 0;
+}
+
+// 7 4
+// 41 38 22 13 22 45 38
+// 1 1 -10
+// 1 0 2
+// 1 0 5
+// 2 1 -4
+// 4 1 5
+// 3 0 -5
+// 68 7
+// 59 4
+// 68 2
+// 44 3
