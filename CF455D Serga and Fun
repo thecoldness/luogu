@@ -1,0 +1,170 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <cmath>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e5 + 5;
+
+int nex[Max_n] , pre[Max_n] , a[Max_n] , hav[320][Max_n];
+int ans , n , B , head[320] , m;
+
+inline int get_block(const int x)
+{
+	return (x - 1) / B + 1;
+}
+
+inline int find(const int x)
+{
+	int bel = get_block(x);
+	int ret = head[bel] , bl = (bel - 1) * B + 1;
+	while(bl < x)
+		ret = nex[ret] , ++ bl;
+	return ret;
+}
+
+inline void change(const int beg , const int ed)
+{
+	pre[nex[ed]] = pre[ed] , nex[pre[ed]] = nex[ed] , nex[pre[beg]] = ed;
+	pre[ed] = pre[beg] , pre[beg] = ed , nex[ed] = beg
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read();
+	B = sqrt(n);
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read() , ++ hav[get_block(i)][a[i]];
+	for(int i = 1 ; i <= n ; ++ i)
+		nex[i] = i + 1;
+
+	for(int i = 1 ; i <= n ; ++ i)
+		pre[i] = i - 1;
+	for(int i = 0 ; i * B <= n ; ++ i)
+		head[i + 1] = i * B + 1;
+	m = read();
+	while(m --)
+	{
+		int type = read() , l = read() , r = read();
+		l = ((l + ans - 1) % n) + 1 , r = ((r + ans - 1) % n) + 1;
+		if(l > r)	swap(l , r);
+		if(type == 1)
+		{
+			if(l == r)	continue;
+			int beg = find(l) , ed = find(r);
+			if(get_block(l) == get_block(r))
+			{
+				if((get_block(l) - 1) * B + 1 == l)
+					head[get_block(l)] = ed;
+				change(beg , ed);
+				continue;
+			}
+			if(l == (get_block(l) - 1) * B + 1)
+				head[get_block(l)] = ed;
+			if(r == (get_block(r) - 1) * B + 1)
+				head[get_block(r)] = nex[ed];
+			change(beg , ed);
+			++ hav[get_block(l)][a[ed]] , -- hav[get_block(r)][a[ed]];
+			for(int i = get_block(l) + 1 ; i <= get_block(r) ; ++ i)
+			{
+				-- hav[i - 1][a[pre[head[i]]]] , ++ hav[i][a[pre[head[i]]]];
+				head[i] = pre[head[i]];
+			}
+		}
+		else
+		{
+			int k = ((read() + ans - 1) % n) + 1;
+			ans = 0;
+			if(get_block(l) == get_block(r))
+			{
+				int tmp = find(l) , goal = find(r);
+				while(tmp != goal)
+					ans += (a[tmp] == k) , tmp = nex[tmp];
+				ans += (a[goal] == k);
+				printf("%d\n" , ans);
+				continue;
+			}
+			for(int i = get_block(l) + 1 ; i < get_block(r) ; ++ i)
+				ans += hav[i][k];
+			int tmp = find(l) , goal = find(r);
+			while(tmp != head[get_block(l) + 1] && tmp)
+				ans += (a[tmp] == k) , tmp = nex[tmp];
+			tmp = head[get_block(r)];
+			while(tmp != goal && tmp)
+				ans += (a[tmp] == k) , tmp = nex[tmp];
+			ans += (a[tmp] == k);
+			printf("%d\n" , ans);
+		}
+	}
+	return 0;
+}
+
+/*
+10
+7 4 5 6 2 4 8 1 4 8
+4
+2 3 10 1
+1 1 7
+2 7 3 8
+1 9 9
+
+1
+0
+
+5
+3 1 4 4 5
+3
+1 1 2
+2 4 2 3
+1 1 5
+
+1
+
+3
+1 1 1
+2
+1 2 1
+2 1 3 1
+
+3
+
+5
+3 3 5 5 1
+3
+2 2 2 3
+2 2 1 1
+2 5 4 1
+
+1
+0
+1
+
+4
+3 3 1 2
+2
+1 4 2
+2 1 2 1
+
+0
+*/
