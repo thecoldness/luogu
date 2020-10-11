@@ -1,0 +1,95 @@
+#include <cstdio>
+#include <queue>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c =	getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e5 + 5;
+
+struct node
+{
+	int id , mod , dis;
+	node(int a , int b , int c)
+	{
+		id = a , mod = b , dis = c;
+	}
+	node() {}
+};
+
+struct Node
+{
+	int nex , to;
+	Node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	Node() {}
+} edge[Max_n * 2];
+
+int dis[Max_n][2] , n , m , qe , head[Max_n] , tot;
+
+bool vis[Max_n][2];
+
+inline void add_edge(const int x , const int y)
+{
+	edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = Node(head[y] , x) , head[y] = tot;
+}
+
+queue<node> q;
+
+inline void bfs()
+{
+	vis[1][0] = true;
+	q.push(node(1 , 0 , 0));
+	while(!q.empty())
+	{
+		int now = q.front().id , cla = q.front().mod , de = q.front().dis;
+		dis[now][cla] = de;
+		q.pop();
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(vis[nex][cla ^ 1])	continue;
+			vis[nex][cla ^ 1] = true;
+			q.push(node(nex , cla ^ 1 , de + 1));
+		}
+	}
+}
+
+int main()
+{
+	n = read() , m = read() , qe = read();
+	for(int i = 1 ; i <= m ; ++ i)
+		add_edge(read() , read());
+	memset(dis , 0x3f3f , sizeof(dis));
+	bfs();
+	while(qe --)
+	{
+		int beg = read() , l = read();
+		if(!vis[beg][l % 2] || dis[beg][l % 2] > l)
+			printf("No\n");
+		else printf("Yes\n");
+	}
+	return 0;
+}
