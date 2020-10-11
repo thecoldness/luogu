@@ -1,0 +1,122 @@
+#include <cstdio>
+#include <queue>
+#include <cctype>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 5005;
+
+struct node
+{
+	int to , id;
+	node(int a , int b)
+	{
+		to = a , id = b;
+	}
+	node() {}
+};
+
+vector<node> v[Max_n];
+
+int n , m , tot , ans[Max_n] , tmp[Max_n] , del;
+int tp;
+
+inline bool cmp(node a , node b)
+{
+	return a.to < b.to;
+}
+
+inline void add_edge(int x , int y)
+{
+	v[x].push_back(node(y , ++ tot));
+	v[y].push_back(node(x , tot));
+}
+
+bool vis[Max_n];
+
+void dfs_subtask1(int now)
+{
+	vis[now] = true;
+	printf("%d " , now);
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to;
+		if(vis[nex])	continue;
+		dfs_subtask1(nex);
+	}
+}
+
+void dfs_subtask2(int now)
+{
+	vis[now] = true;
+	tmp[ ++ tp] = now;
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int nex = v[now][i].to;
+		if(v[now][i].id == del || vis[nex])	continue;
+		dfs_subtask2(nex);
+	}
+}
+
+inline void check()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		if(tmp[i] < ans[i])
+		{
+			memcpy(ans , tmp , sizeof(ans));
+			return;
+		}
+		if(tmp[i] > ans[i])
+			return;
+	}
+}
+
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+		add_edge(read() , read());
+	for(int i = 1 ; i <= n ; ++ i)
+		sort(v[i].begin() , v[i].end() , cmp);
+	if(m == n - 1)
+	{
+		dfs_subtask1(1);
+		return 0;
+	}
+	memset(ans , 0x3f , sizeof(ans));
+	for(del = 1 ; del <= m ; ++ del)
+	{
+		tp = 0;
+		memset(vis , false , sizeof(vis));
+		dfs_subtask2(1);
+		if(tp < n)	continue;
+		check();
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		printf("%d " , ans[i]);
+	return 0;
+}
