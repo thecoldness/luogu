@@ -1,0 +1,97 @@
+#include <cstring>
+#include <cctype>
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e5 + 5;
+const int MOD = 1e9 + 7;
+
+int logm[Max_n] , n , m , fa[Max_n * 20];
+
+inline int get(const int x , const int y)
+{
+	return y * n + x;
+}
+
+int find(const int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+
+inline void merge(const int x , const int y , const int len)
+{
+	int rx = x + len - 1 , ry = y + len - 1;
+	fa[find(get(x , logm[len]))] = find(get(y , logm[len]));
+	fa[find(get(rx - (1 << logm[len]) + 1 , logm[len]))] = find(get(ry - (1 << logm[len]) + 1 , logm[len]));
+}
+
+inline void push_down(const int pos , const int dep)
+{
+	int sym = find(get(pos , dep));
+	if(sym == n * dep + pos)	return;
+	int symx = sym - dep * n;
+	merge(pos , symx , (1 << (dep - 1))) , merge(pos + (1 << (dep - 1)) , symx + (1 << (dep - 1)) , (1 << (dep - 1)));
+}
+
+bool vis[Max_n];
+
+inline ll quickpow(ll x , int y)
+{
+	ll ret = 1;
+	while(y)
+	{
+		if(y & 1)	ret *= x , ret %= MOD;
+		x *= x , x %= MOD;
+		y >>= 1;
+	}
+	return ret;
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 1 ; i <= n * (logm[n] + 1); ++ i)
+		fa[i] = i;
+	while(m --)
+	{
+		int l1 = read() , r1 = read() , l2 = read() , r2 = read();
+		if(l1 == l2)	continue;
+		merge(l1 , l2 , r1 - l1 + 1);
+	}
+	for(int i = logm[n] ; i ; -- i)
+		for(int j = 1 ; j <= n - (1 << i) + 1 ; ++ j)
+			push_down(j , i);
+	for(int i = 1 ; i <= n ; ++ i)
+		vis[find(i)] = true;
+	ll cnt = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+		if(vis[i])	++ cnt;
+	cnt = quickpow(10 , cnt - 1) * 9 % MOD;
+	printf("%lld\n" , (cnt + MOD) % MOD);
+	return 0;
+}
