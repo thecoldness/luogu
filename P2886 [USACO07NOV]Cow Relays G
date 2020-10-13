@@ -1,0 +1,110 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_t = 105;
+
+struct node
+{
+	int from , to , val;
+	node(int a , int b , int c)
+	{
+		from = a , to = b , val = c;
+	}
+	node() {}
+} edge[Max_t];
+
+int tot , check[Max_t * 2] , n , t , s , e , len;
+
+inline int find(const int x)
+{
+	return lower_bound(check + 1 , check + len , x) - check;
+}
+
+struct Matrix
+{
+	int h[Max_t][Max_t];
+	int *operator [](const int a)
+	{
+		return h[a];
+	}
+	void inf()
+	{
+		memset(h , 0x3f , sizeof(h));
+	}
+} dis , ans;
+
+Matrix operator * (Matrix a , Matrix b)
+{
+	Matrix ret;
+	ret.inf();
+	for(int i = 1 ; i <= len ; ++ i)
+		for(int j = 1 ; j <= len ; ++ j)
+			for(int k = 1 ; k <= len ; ++ k)
+				ret[i][j] = min(a[i][k] + b[k][j] , ret[i][j]);
+	return ret;
+}
+
+Matrix operator ^ (Matrix x , int y)
+{
+	Matrix ret;
+	ret = x , -- y;
+	while(y)
+	{
+		if(y & 1)	ret = ret * x;
+		x = x * x , y >>= 1;
+	}
+	return ret;
+}
+
+inline void add_edge(const int x , const int y , const int z)
+{
+	dis[x][y] = min(dis[x][y] , z);
+	dis[y][x] = min(dis[y][x] , z);
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , t = read() , s = read() , e = read();
+	check[ ++ tot] = s , check[ ++ tot] = e;
+	for(int i = 1 ; i <= t ; ++ i)
+	{
+		int ui = read() , vi = read() , ti = read();
+		edge[i] = node(ti , vi , ui);
+		check[ ++ tot] = vi , check[ ++ tot] = ti;
+	}
+	sort(check + 1 , check + tot + 1);
+	len = unique(check + 1 , check + tot + 1) - check;
+	s = find(s) , e = find(e);
+	dis.inf();
+	for(int i = 1 ; i <= t ; ++ i)
+	{
+		edge[i].from = find(edge[i].from) , edge[i].to = find(edge[i].to);
+		add_edge(edge[i].from , edge[i].to , edge[i].val);
+	}
+	ans = dis ^ n;
+	printf("%d" , ans[s][e]);
+	return 0;
+}
