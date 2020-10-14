@@ -1,0 +1,130 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <random>
+#include <chrono>
+using namespace std;
+
+typedef long long ll;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e6 + 5;
+mt19937 rnd;
+
+inline ll getr(const ll l , const ll r)
+{
+	uniform_int_distribution<ll>	dis(l , r);
+	return dis(rnd);
+}
+
+struct node
+{
+	int nex , to;
+	ll val;
+	node(int a , int b , ll c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node() {}
+} edge[Max_n * 2];
+
+int n , m , head[Max_n] , tot;
+
+ll mp[Max_n] , val[Max_n];
+
+inline void add_edge(const int x , const int y , const ll z)
+{
+	edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+}
+
+void dfs(int now , int from)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		ll nex = edge[i].to , va = edge[i].val;
+		if(nex == from)	continue;
+		val[nex] = val[now] ^ va;
+		dfs(nex , now);
+	}
+}
+
+struct Hash_table
+{
+	const int p = Max_n;
+	struct Hash
+	{
+		int nex;
+		ll val;
+		Hash(int a , ll b)
+		{
+			nex = a , val = b;
+		}
+		Hash() {}
+	} e[Max_n + 10];
+	int h[Max_n + 10] , etot;
+	inline void ins(const ll x)
+	{
+		int tmp = x % p;
+		for(int i = h[tmp] ; i ; i = e[i].nex)
+			if(e[i].val == x)	return;
+		e[ ++ etot] = Hash(h[tmp] , x) , h[tmp] = etot;
+	}
+	inline bool find(const ll x)
+	{
+		int tmp = x % p;
+		for(int i = h[tmp] ; i ; i = e[i].nex)
+			if(x == e[i].val)	return true;
+		return false;
+	}
+} ha;
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+	n = read() , m = read();
+	ha.ins(0);
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		int ui = read() , vi = read() , ti = read();
+		if(!mp[ti])
+		{
+			ll v = getr(1 , 1e18);
+			while(ha.find(v))
+				v = getr(1 , 1e18);
+			mp[ti] = v , ha.ins(v);
+		}
+		add_edge(ui , vi , mp[ti]);
+	}
+	dfs(1 , 0);
+	ll a = read() , b = read() , cnt = 0;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int x = a % n + 1 , y = b % n + 1;
+		if(ha.find(val[x] ^ val[y]))
+			++ cnt;
+		a = (a * 666073) % (int)(1e9 + 7) , b = (b * 233) % 998244353;
+	}
+	printf("%lld\n" , cnt);
+	return 0;
+}
