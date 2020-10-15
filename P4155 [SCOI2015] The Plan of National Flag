@@ -1,0 +1,98 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 2e5 + 5;
+
+struct node
+{
+	int li , ri , id;
+	node(int a , int b , int c)
+	{
+		li = a , ri = b , id = c;
+	}
+	node() {}
+} peo[Max_n * 2];
+
+int tp , n , m , f[Max_n * 2][25] , logm[Max_n * 2] , check[Max_n * 2];
+int ans[Max_n];
+
+inline bool cmp(const node a , const node b)
+{
+	return a.li < b.li;
+}
+
+inline int find(const int x)
+{
+	return upper_bound(check + 1 , check + tp + 1 , x) - check - 1;
+}
+
+inline void get_ready()
+{
+	for(int i = 1 ; i < tp ; ++ i)
+		f[i][0] = find(peo[i].ri);
+	for(int j = 1 ; j <= 20 ; ++ j)
+		for(int i = 1 ; i < tp ; ++ i)
+			f[i][j] = f[f[i][j - 1]][j - 1];
+}
+
+inline void get_ans(int x)
+{
+	int ret = 0 , beg = peo[x].li , bel = peo[x].id;
+	for(int i = 20 ; i >= 0 ; -- i)
+	{
+		if(!f[x][i] || peo[f[x][i]].ri - beg >= m)	continue;
+		ret += 1 << i , x = f[x][i];
+	}
+	ans[bel] = ret + 2;
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	tp = n = read() , m = read();
+	for(int i = 2 ; i <= n * 2 ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui = read() , vi = read();
+		if(vi < ui)
+			vi += m;
+		peo[i] = node(ui , vi , i);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		if(peo[i].ri <= m)
+			peo[ ++ tp] = node(peo[i].li + m , peo[i].ri + m , i);
+	sort(peo + 1 , peo + tp + 1 , cmp);
+	for(int i = 1 ; i <= tp ; ++ i)
+		check[i] = peo[i].li;
+	get_ready();
+	// check[tp + 1] = INT_MAX;
+	for(int i = 1 ; i <= n ; ++ i)
+		get_ans(i);
+	for(int i = 1 ; i <= n ; ++ i)
+		printf("%d " , ans[i]);
+	return 0;
+}
