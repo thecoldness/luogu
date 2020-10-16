@@ -1,0 +1,133 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 2e3 + 5;
+const int Max_m = 1e4 + 5;
+
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_m];
+
+int head[Max_n] , tot , n , m , k[Max_n] , in[Max_n] , tmp_in[Max_n];
+int ans[Max_n];
+
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+
+struct God
+{
+	int val , id;
+	God(int a , int b)
+	{
+		val = a , id = b;
+	}
+	God() {}
+	bool operator < (const God &a)const
+	{
+		return val > a.val;
+	}
+};
+
+priority_queue<God> zzz;
+
+inline void solve_1()
+{
+	int cnt = n;
+	memcpy(tmp_in , in , sizeof(in));
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!in[i])
+			zzz.push(God(n - k[i] , i));
+	while(!zzz.empty())
+	{
+		int now = zzz.top().id;
+		zzz.pop();
+		ans[cnt --] = now;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			-- tmp_in[nex];
+			if(!tmp_in[nex])
+				zzz.push(God(n - k[nex] , nex));
+		}
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		printf("%d " , ans[i]);
+	puts("");
+}
+
+inline int solve_2(int now)
+{
+	while(zzz.size())
+		zzz.pop();
+	int cnt = n;
+	memcpy(tmp_in , in , sizeof(in));
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!in[i] && i != now)
+			zzz.push(God(n - k[i] , i));
+	while(!zzz.empty())
+	{
+		int nw = zzz.top().id , va = zzz.top().val;
+		zzz.pop();
+		if(cnt > n - va)
+			return cnt;
+		-- cnt;
+		for(int i = head[nw] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			-- tmp_in[nex];
+			if((!tmp_in[nex]) && (nex != now))
+				zzz.push(God(n - k[nex] , nex));
+		}
+	}
+	return cnt;
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		k[i] = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read();
+		++ in[ui] , add_edge(vi , ui);
+	}
+	solve_1();
+	for(int i = 1 ; i <= n ; ++ i)
+		printf("%d " ,solve_2(i));
+	return 0;
+}
