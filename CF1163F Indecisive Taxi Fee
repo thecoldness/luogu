@@ -1,0 +1,300 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+#define int long long
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 2e5 + 5;
+const int Max_m = 2e5 + 5;
+
+struct node
+{
+	int nex , to , val , id;
+	node(int a , int b , int c , int d)
+	{
+		nex = a , to = b , val = c , id = d;
+	}
+	node() {}
+} edge[Max_m * 2];
+
+int head[Max_n] , tot , n , m , q , fa[Max_n];
+int beg_1[Max_n] , beg_n[Max_n] , rev[Max_n] , bel[Max_n] , all;
+
+ll dis_1[Max_n] , dis_n[Max_n];
+
+bool vis[Max_n] , MSR[Max_n] , MSR_edge[Max_m];
+
+inline void add_edge(int x , int y , int z , int d)
+{
+	edge[ ++ tot] = node(head[x] , y , z , d) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x , z , d) , head[y] = tot;
+}
+
+struct God
+{
+	ll val , id;
+	God(ll a , ll b)
+	{
+		val = a , id = b;
+	}
+	God() {}
+	bool operator < (const God &a)const
+	{
+		return val > a.val;
+	}
+};
+
+priority_queue<God> zzz;
+
+inline void dijie(int beg)
+{
+	memset(dis_n , 0x3f , sizeof(dis_n));
+	while(zzz.size())
+		zzz.pop();
+	memset(vis , false , sizeof(vis));
+	zzz.push(God(0 , beg));
+	while(!zzz.empty())
+	{
+		int now = zzz.top().id;
+		ll de = zzz.top().val;
+		zzz.pop();
+		if(vis[now])
+			continue;
+		vis[now] = true;
+		dis_n[now] = de;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			ll va = edge[i].val;
+			if(vis[nex])	continue;
+			zzz.push(God(de + va , nex));
+		}
+	}
+}
+
+bool dfs_MSR(int now , int from , int cnt)
+{
+	if(now == n)
+	{
+		all = cnt - 1;
+		return true;
+	}
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to , id = edge[i].id;
+		ll va = edge[i].val;
+		if((nex == from) || ((dis_1[now] + va + dis_n[nex]) != dis_1[n]))
+			continue;
+		if(dfs_MSR(nex , now , cnt + 1))
+		{
+			MSR[now] = true , bel[now] = cnt , rev[cnt] = now , MSR_edge[id] = true;
+			return true;
+		}
+	}
+	return false;
+}
+
+void dfs_1(int now , int from)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		ll va = edge[i].val , id = edge[i].id;
+		if(nex == from || beg_1[nex])
+			continue;
+		if(dis_1[now] + va != dis_1[nex])
+			continue;
+		if(MSR_edge[id])
+			beg_1[nex] = nex;
+		else beg_1[nex] = beg_1[now];
+		dfs_1(nex , now);
+	}
+}
+
+void dfs_n(int now , int from)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		ll va = edge[i].val , id = edge[i].id;
+		if(nex == from || beg_n[nex])
+			continue;
+		if(dis_n[nex] != dis_n[now] + va)
+			continue;
+		if(MSR_edge[id])
+			beg_n[nex] = nex;
+		else beg_n[nex] = beg_n[now];
+		dfs_n(nex , now);
+	}
+}
+
+struct Node
+{
+	ll l , r , val , tag;
+	Node(ll a , ll b)
+	{
+		l = a , r = b , val = tag = LLONG_MAX >> 1;
+	}
+	Node() {}
+} tree[Max_n << 2];
+
+void build(int l , int r , int tr)
+{
+	tree[tr] = Node(l , r);
+	if(l == r)
+		return;
+	int mid = (l + r) >> 1;
+	build(l , mid , tr * 2);
+	build(mid + 1 , r , tr * 2 + 1);
+}
+
+inline void push_down(int tr)
+{
+	tree[tr * 2].val = min(tree[tr * 2].val , tree[tr].tag);
+	tree[tr * 2].tag = min(tree[tr * 2].tag , tree[tr].tag);
+	tree[tr * 2 + 1].val = min(tree[tr * 2 + 1].val , tree[tr].tag);
+	tree[tr * 2 + 1].tag = min(tree[tr * 2 + 1].tag , tree[tr].tag);
+	tree[tr].tag = LLONG_MAX >> 1;
+}
+
+inline void push_up(const int tr)
+{
+	tree[tr].val = min(tree[tr * 2].val , tree[tr * 2 + 1].val);
+}
+
+void change(int l , int r , ll val , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(r < ll || rr < l)
+		return;
+	if(l <= ll && rr <= r)
+	{
+		tree[tr].tag = min(tree[tr].tag , val);
+		tree[tr].val = min(tree[tr].val , val);
+		return;
+	}
+	push_down(tr);
+	change(l , r , val , tr * 2);
+	change(l , r , val , tr * 2 + 1);
+	push_up(tr);
+}
+
+ll query(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(r < ll || rr < l)
+		return LLONG_MAX >> 1;
+	if(l <= ll && rr <= r)
+		return tree[tr].val;
+	push_down(tr);
+	return min(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+}
+
+struct thecold
+{
+	int from , to , val;
+	thecold(int a , int b , int c)
+	{
+		from = a , to = b , val = c;
+	}
+	thecold() {}
+} e[Max_m];
+
+inline void work(const int x , const int y , const ll val)
+{
+	if(bel[beg_1[x]] < bel[beg_n[y]])
+		change(bel[beg_1[x]] , bel[beg_n[y]] - 1 , dis_1[x] + dis_n[y] + val , 1);
+	if(bel[beg_1[y]] < bel[beg_n[x]])
+		change(bel[beg_1[y]] , bel[beg_n[x]] - 1 , dis_1[y] + dis_n[x] + val , 1);
+}
+
+inline ll solve(const int x , const int val)
+{
+	ll ret = min(dis_1[e[x].from] + dis_n[e[x].to] , dis_1[e[x].to] + dis_n[e[x].from]);
+	ret += val;
+	ret = min(ret , query(min(bel[e[x].from] , bel[e[x].to]) , min(bel[e[x].from] , bel[e[x].to]) , 1));
+	return ret;
+}
+
+int find(int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+
+inline void merge(int x , int y)
+{
+	fa[find(x)] = find(y);
+}
+
+signed main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read() , ti = read();
+		e[i] = thecold(ui , vi , ti);
+		merge(ui , vi);
+		add_edge(ui , vi , ti , i);
+	}
+	dijie(1) , memcpy(dis_1 , dis_n , sizeof(dis_1));
+	dijie(n);
+	dfs_MSR(1 , 0 , 1);
+	MSR[n] = true , rev[ ++ all] = n , bel[n] = all;
+	beg_1[1] = 1 , beg_n[n] = n;
+	build(0 , all , 1);
+	dfs_1(1 , 1);
+	dfs_n(n , n);
+	for(int i = 1 ; i <= m ; ++ i)
+		if(!MSR_edge[i] && find(e[i].from) == find(1))
+			work(e[i].from , e[i].to , e[i].val);
+	while(q --)
+	{
+		ll ui = read() , ti = read();
+		if(MSR_edge[ui])
+		{
+			if(ti <= e[ui].val)
+				printf("%lld\n" , dis_1[n] - e[ui].val + ti);
+			else printf("%lld\n" , solve(ui , ti));
+		}
+		else
+		{
+			if(ti >= e[ui].val)
+				printf("%lld\n" , dis_1[n]);
+			else
+			{
+				ll ret = dis_1[n];
+				ret = min(ret , dis_1[e[ui].from] + dis_n[e[ui].to] + ti);
+				ret = min(ret , dis_1[e[ui].to] + dis_n[e[ui].from] + ti);
+				printf("%lld\n" , ret);
+			}
+		}
+	}
+	return 0;
+}
