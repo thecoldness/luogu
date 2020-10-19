@@ -1,0 +1,72 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 5e4 + 5;
+
+struct node
+{
+	int ai , bi;
+	node(int a , int b)
+	{
+		ai = a , bi = b;
+	}
+	node() {}
+} pot[Max_n];
+
+int n , t;
+
+ll val[Max_n];
+
+inline bool cmp(node a , node b)
+{
+	if(min(a.ai , b.bi) == min(a.bi , b.ai))
+		return a.ai < b.ai;
+	return min(a.ai , b.bi) < min(b.ai , a.bi);
+}
+
+int main()
+{
+	t = read();
+	while(t --)
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int ui = read() , vi = read();
+			pot[i] = node(ui , vi);
+		}
+		sort(pot + 1 , pot + n + 1 , cmp);
+		ll sum = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			sum += pot[i].ai;
+			val[i] = max(val[i - 1] , sum) + pot[i].bi;
+		}
+		printf("%lld\n" , val[n]);
+	}
+	return 0;
+}
