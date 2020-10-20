@@ -1,0 +1,63 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <climits>
+#include <cmath>
+using namespace std;
+
+typedef long long ll;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 21;
+
+ll n , m , h[Max_n] , w[Max_n] , s[Max_n] , ans = -INT_MAX;
+ll sum[1 << Max_n] , tall[1 << Max_n] , f[1 << Max_n];
+
+inline int lowbit(const int x)
+{
+	return x & -x;
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 0 ; i < n ; ++ i)
+		tall[1 << i] = h[i] = read() , w[i] = read() , s[i] = read();
+	for(int i = 0 ; i < 1 << n ; ++ i)
+		f[i] = - INT_MAX;
+	for(int i = 0 ; i < n ; ++ i)
+		f[1 << i] = s[i];
+	for(int i = 3 ; i < 1 << n ; ++ i)
+		for(int j = 0 ; j < n ; ++ j)
+			if(i & (1 << j))
+				f[i] = max(f[i] , min(f[i ^ (1 << j)] - w[j] , s[j]));
+	for(int i = 1 ; i < 1 << n ; ++ i)
+		sum[i] = sum[i - lowbit(i)] + tall[lowbit(i)];
+	for(int i = 1 ; i < 1 << n ; ++ i)
+		if(sum[i] >= m)
+			ans = max(ans , f[i]);
+	if(ans >= 0)
+		printf("%lld\n" , ans);
+	else puts("Mark is too tall");
+	return 0;
+}P3112 [USACO14DEC]Guard Mark G
