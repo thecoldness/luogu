@@ -51,6 +51,8 @@ inline int ni(const int x)
 
 inline ll dfs(const int x , const int y)
 {
+	if(y >= k)
+		return y;
 	if(x + y >= k)
 		return (x + y + (pa * nb) % MOD) % MOD;
 	if(f[x][y])	return f[x][y];
