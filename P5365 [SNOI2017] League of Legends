@@ -1,0 +1,55 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+inline ll read()
+{
+	ll res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_m = 125;
+
+int n , k[Max_m] , c[Max_m];
+int maxn;
+
+const int Max_n = 3e5 + 5;
+
+ll f[Max_n] , m ;
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		k[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		c[i] = read() , maxn += k[i] * c[i];
+	f[0] = 1;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int l = maxn ; l >= c[i] ; -- l)
+			for(int j = 1 ; j <= k[i] && j * c[i] <= l ; ++ j)
+				f[l] = max(f[l] , f[l - j * c[i]] * j);
+	int ans = 1;
+	while(ans <= maxn && f[ans] < m)
+		++ ans;
+	printf("%d\n" , ans);
+	return 0;
+}
