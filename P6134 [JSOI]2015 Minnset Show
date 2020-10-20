@@ -1,0 +1,103 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <bitset>
+#include <queue>
+#include <vector>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 3e4 + 5;
+const int Max_m = 1e5 + 5;
+
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_m];
+
+int head[Max_n] , tot , n , m , in[Max_n] , ans , dfn[Max_n];
+int tim;
+
+inline bool cmp(int a , int b)
+{
+	return dfn[a] > dfn[b];
+}
+
+vector<int> v[Max_n];
+
+bitset<Max_n> vis[Max_n];
+
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+
+queue<int> q;
+
+inline void topu()
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!in[i])
+			q.push(i);
+	while(!q.empty())
+	{
+		int now = q.front() , sz = v[now].size();
+		vis[now][now] = true , dfn[now] = ++ tim;
+		q.pop();
+		sort(v[now].begin() , v[now].end() , cmp);
+		for(int i = 0 ; i < sz ; ++ i)
+		{
+			int nex = v[now][i];
+			if(vis[now][nex])
+				++ ans;
+			vis[now] |= vis[nex];
+		}
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			-- in[nex];
+			v[nex].push_back(now);
+			if(!in[nex])
+				q.push(nex);
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read();
+		++ in[ui] , add_edge(vi , ui);
+	}
+	topu();
+	printf("%d\n" , ans);
+	return 0;
+}
