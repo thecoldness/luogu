@@ -1,0 +1,80 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e6 + 5;
+
+	int q[Max_n] , head = 1 , tail , n , k , nex;
+	int f[Max_n][2] , ans[Max_n] , use;
+
+	ll a[Max_n] , m;
+
+	inline void change_ans(const int x)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			ans[i] = f[ans[i]][x];
+	}
+
+	inline void change_f(const int x)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i][x ^ 1] = f[f[i][x]][x];
+	}
+
+	inline void main()
+	{
+		n = read() , k = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , ans[i] = i;
+		nex = k + 2;
+		for(int i = 1 ; i <= k + 1 ; ++ i)
+			q[ ++ tail] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			while(nex <= n && a[nex] + a[q[head]] < 2 * a[i])
+				++ head , q[ ++ tail] = nex ++;
+			if(a[q[tail]] + a[q[head]] > a[i] * 2)
+				f[i][0] = q[tail];
+			else f[i][0] = q[head];
+		}
+		while(m)
+		{
+			if(m & 1)
+				change_ans(use);
+			change_f(use);
+			m >>= 1 , use ^= 1;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			printf("%d " , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
