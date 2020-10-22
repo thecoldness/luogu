@@ -1,0 +1,192 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c== '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	struct node
+	{
+		int l , r , sum , tag;
+		node(int a , int b)
+		{
+			l = a , r = b , sum = tag = 0;
+		}
+		node() {}
+	} tree[Max_n << 2];
+
+	int n , m , head[Max_n] , tot , top[Max_n] , dep[Max_n];
+	int son[Max_n] , dfn[Max_n] , tim , siz[Max_n] , fa[Max_n];
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node() {}
+	} edge[Max_n * 2];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = Node(head[y] , x) , head[y] = tot;
+	}
+
+	void dfs_son(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , siz[now] = 1 , fa[now] = from;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_son(nex , now);
+			siz[now] += siz[nex];
+			if(siz[son[now]] < siz[nex])
+				son[now] = nex;
+		}
+	}
+
+	void dfs_chain(const int now , const int from , const int tp)
+	{
+		dfn[now] = ++ tim , top[now] = tp;
+		if(son[now])
+			dfs_chain(son[now] , now , tp);
+		else return;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || son[now] == nex)	continue;
+			dfs_chain(nex , now , nex);
+		}
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)	return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+	}
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+
+	inline void push_down(const int tr)
+	{
+		if(!tree[tr].tag)	return;
+		tree[tr * 2].tag += tree[tr].tag , tree[tr * 2 + 1].tag += tree[tr].tag;
+		tree[tr * 2].sum += (tree[tr * 2].r - tree[tr * 2].l + 1) * tree[tr].tag;
+		tree[tr * 2 + 1].sum += (tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1) * tree[tr].tag;
+		tree[tr].tag = 0;
+	}
+
+	void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(rr < l || ll > r)	return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].sum += (tree[tr].r - tree[tr].l + 1) * val;
+			tree[tr].tag += val;
+			return;
+		}
+		push_down(tr);
+		change(l , r , tr * 2 , val);
+		change(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	int query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(rr < l || ll > r)	return 0;
+		if(l <= ll && rr <= r)
+			return tree[tr].sum;
+		push_down(tr);
+		return query(l , r , tr * 2) + query(l , r , tr * 2 + 1);
+	}
+
+	inline void get_change(int x , int y , const int val)
+	{
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])
+				swap(x , y);
+			change(dfn[top[x]] , dfn[x] , 1 , val);
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])
+			swap(x , y);
+		change(dfn[x] , dfn[y] , 1 , val);
+	}
+
+	inline bool get_query(int x , int y)
+	{
+		int ret = 0;
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])
+				swap(x , y);
+			ret += query(dfn[top[x]] , dfn[x] , 1);
+			if(ret > 0)	return true;
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])
+			swap(x , y);
+		ret += query(dfn[x] , dfn[y] , 1);
+		if(ret > 0)
+			return true;
+		return false;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_son(1 , 0);
+		dfs_chain(1 , 0 , 1);
+		build(1 , tim , 1);
+		while(m --)
+		{
+			int ui = read() , vi = read() , xi = read() , ti = read();
+			get_change(ui , vi , 1);
+			if(get_query(xi , ti))
+				puts("Y");
+			else puts("N");
+			get_change(ui , vi , -1);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
