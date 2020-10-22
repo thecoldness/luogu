@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 5e5 + 5;
+
+	char c[Max_n];
+
+	int son[Max_n][2] , f[Max_n][3][2] , len , tot;
+	int root , max_ans , min_ans = INT_MAX;
+
+	void dfs(int &now)
+	{
+		now = ++ tot;
+		if(c[now] == '0')
+		{
+			f[now][1][0] = f[now][1][1] = 0;
+			f[now][0][0] = f[now][0][1] = 0;
+			f[now][2][0] = f[now][2][1] = 1;
+			return;
+		}
+		if(c[now] == '1')
+		{
+			dfs(son[now][0]);
+			f[now][0][0] = min(f[son[now][0]][1][0] , f[son[now][0]][2][0]);
+			f[now][0][1] = max(f[son[now][0]][1][1] , f[son[now][0]][2][1]);
+			f[now][1][0] = min(f[son[now][0]][0][0] , f[son[now][0]][2][0]);
+			f[now][1][1] = max(f[son[now][0]][0][1] , f[son[now][0]][2][1]);
+			f[now][2][0] = min(f[son[now][0]][0][0] , f[son[now][0]][1][0]) + 1;
+			f[now][2][1] = max(f[son[now][0]][0][1] , f[son[now][0]][1][1]) + 1;
+		}
+		if(c[now] == '2')
+		{
+			dfs(son[now][0]) , dfs(son[now][1]);
+			f[now][0][0] = min(f[son[now][0]][1][0] + f[son[now][1]][2][0] , f[son[now][0]][2][0] + f[son[now][1]][1][0]);
+			f[now][0][1] = max(f[son[now][0]][1][1] + f[son[now][1]][2][1] , f[son[now][0]][2][1] + f[son[now][1]][1][1]);
+			f[now][1][0] = min(f[son[now][0]][0][0] + f[son[now][1]][2][0] , f[son[now][0]][2][0] + f[son[now][1]][0][0]);
+			f[now][1][1] = max(f[son[now][0]][0][1] + f[son[now][1]][2][1] , f[son[now][0]][2][1] + f[son[now][1]][0][1]);
+			f[now][2][0] = min(f[son[now][0]][0][0] + f[son[now][1]][1][0] , f[son[now][0]][1][0] + f[son[now][1]][0][0]) + 1;
+			f[now][2][1] = max(f[son[now][0]][0][1] + f[son[now][1]][1][1] , f[son[now][0]][1][1] + f[son[now][1]][0][1]) + 1;
+		}
+	}
+
+	inline void main()
+	{
+		scanf("%s" , c + 1);
+		len = strlen(c + 1);
+		dfs(root);
+		max_ans = max(f[root][1][1] , max(f[root][0][1] , f[root][2][1]));
+		min_ans = min(f[root][1][0] , min(f[root][0][0] , f[root][2][0]));
+		printf("%d %d\n" , max_ans , min_ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
