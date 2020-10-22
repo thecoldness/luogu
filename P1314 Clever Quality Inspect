@@ -1,0 +1,95 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <climits>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	int pre_w[Max_n] , n , m , a[Max_n] , w[Max_n] , v[Max_n];
+
+	struct node
+	{
+		int li , ri;
+		node(int a , int b)
+		{
+			li = a , ri = b;
+		}
+		node() {}
+	} seg[Max_n];
+
+	ll pre_v[Max_n] , s;
+
+	inline ll query(const int l , const int r)
+	{
+		return (pre_v[r] - pre_v[l]) * (pre_w[r] - pre_w[l]);
+	}
+
+	inline ll check(const int x)
+	{
+		ll ret = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(w[i] >= x)
+				pre_w[i] = pre_w[i - 1] + 1 , pre_v[i] = pre_v[i - 1] + v[i];
+			else pre_w[i] = pre_w[i - 1] , pre_v[i] = pre_v[i - 1];
+		for(int i = 1 ; i <= m ; ++ i)
+			ret += query(seg[i].li - 1 , seg[i].ri);
+		return ret;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read() , s = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read() , v[i] = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			seg[i] = node(ui , vi);
+		}
+		int l = 0 , r = 1e6;
+		ll ans = LLONG_MAX;
+		while(l <= r)
+		{
+			int mid = (l + r) >> 1;
+			ll ret = check(mid);
+			if(ret - s > 0)
+				l = mid + 1;
+			else r = mid - 1;
+			ans = min(ans , abs(ret - s));
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
