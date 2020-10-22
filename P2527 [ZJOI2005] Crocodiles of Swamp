@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	vector<int> v[15];
+
+	const int Max_n = 55;
+	const int MOD = 1e4;
+
+	int n , m , st , ed , k , cnt;
+
+	struct Matrix
+	{
+		int h[Max_n][Max_n];
+
+		int *operator[](const int a)
+		{
+			return h[a];
+		}
+
+		inline void clean()
+		{
+			memset(h , 0 , sizeof(h));
+		}
+
+	} swp[15] , comb;
+
+	Matrix operator * (Matrix a , Matrix b)
+	{
+		Matrix ret;
+		ret.clean();
+		for(int i = 0 ; i < n ; ++ i)
+			for(int j = 0 ; j < n ; ++ j)
+				for(int k = 0 ; k < n ; ++ k)
+					ret[i][j] += (ll)a[i][k] * b[k][j] % MOD , ret[i][j] %= MOD;
+		return ret;
+	}
+
+	Matrix operator ^ (Matrix a , int y)
+	{
+		Matrix ret;
+		ret.clean();
+		for(int i = 0 ; i < n ; ++ i)
+			ret[i][i] = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret = ret * a;
+			y >>= 1 , a = a * a;
+		}
+		return ret;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , st = read() , ed = read() , k = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			for(int i = 1 ; i <= 12 ; ++ i)
+			{
+				swp[i][ui][vi] = 1 , swp[i][vi][ui] = 1;
+				swp[i][ui][vi] %= MOD , swp[i][vi][ui] %= MOD;
+			}
+		}
+		cnt = read();
+		for(int i = 1 ; i <= cnt ; ++ i)
+		{
+			int rnd = read() , tmp[5];
+			for(int i = 0 ; i < rnd ; ++ i)
+				tmp[i] = read();
+			tmp[rnd] = tmp[0];
+			for(int i = 1 ; i <= 12 ; ++ i)
+				v[i].push_back(tmp[(i - 1) % rnd + 1]);
+		}
+		for(int i = 1 ; i <= 12 ; ++ i)
+		{
+			int sz = v[i].size();
+			for(int j = 0 ; j < sz ; ++ j)
+			{
+				int now = v[i][j];
+				for(int k = 0 ; k < n ; ++ k)
+					swp[i][k][now] = 0;
+			}
+		}
+		for(int i = 0 ; i < n ; ++ i)
+			comb[i][i] = 1;
+		for(int i = 1 ; i <= 12 ; ++ i)
+			comb = comb * swp[i];
+		comb = comb ^ (k / 12);
+		for(int i = 1 ; i <= k % 12 ; ++ i)
+			comb = comb * swp[i];
+		printf("%d" , comb[st][ed] % MOD);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
