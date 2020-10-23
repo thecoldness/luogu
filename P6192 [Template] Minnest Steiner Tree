@@ -1,0 +1,121 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <queue>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 105;
+	const int Max_m = 505;
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node() {}
+	} edge[Max_m * 2];
+
+	int head[Max_n] , n , m , k , rev[Max_n];
+	int f[1 << 11][Max_n] , tot , ans = INT_MAX;
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+
+	struct God
+	{
+		int id , val;
+		God(int a , int b)
+		{
+			id = a , val = b;
+		}
+		God() {}
+		bool operator < (const God &a)const
+		{
+			return val > a.val;
+		}
+	};
+
+	priority_queue<God> zzz;
+
+	bool vis[Max_n];
+
+	inline void clean()
+	{
+		memset(vis , false , sizeof(vis));
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , di = read();
+			add_edge(ui , vi , di);
+		}
+		memset(f , 0x3f , sizeof(f));
+		for(int i = 0 ; i < k ; ++ i)
+		{
+			int ui = read();
+			f[1 << i][ui] = 0 , rev[ui] = i;
+		}
+		for(int i = 1 ; i < 1 << k ; ++ i)
+		{
+			for(int j = i ; j ; j = (i & (j - 1)))
+				for(int k = 1 ; k <= n ; ++ k)
+					f[i][k] = min(f[j][k] + f[i ^ j][k] , f[i][k]);
+			clean();
+			for(int j = 1 ; j <= n ; ++ j)
+				zzz.push(God(j , f[i][j]));
+			while(!zzz.empty())
+			{
+				int now = zzz.top().id , de = zzz.top().val;
+				zzz.pop();
+				if(vis[now])	continue;
+				vis[now] = true , f[i][now] = de;
+				for(int j = head[now] ; j ; j = edge[j].nex)
+				{
+					int nex = edge[j].to , va = edge[j].val;
+					if(vis[nex])	continue;
+					zzz.push(God(nex , de + va));
+				}
+			}
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			ans = min(ans , f[(1 << k) - 1][i]);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
