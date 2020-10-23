@@ -1,0 +1,99 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 5e5 + 5;
+
+	vector<int> v[Max_n];
+
+	double p , val[Max_n] , ans;
+
+	int n , m;
+
+	inline double quickpow(double x , int y)
+	{
+		double ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x;
+			x *= x , y >>= 1;
+		}
+		return ret;
+	}
+
+	inline double calc(const int x , const int y)
+	{
+		return p * quickpow(1.0 - p , x - 1) / (1 - quickpow(1.0 - p , y));
+	}
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+
+	inline void add(int pos , double va)
+	{
+		for(int i = pos ; i <= n ; i += lowbit(i))
+			val[i] += va;
+	}
+
+	inline double query(int pos)
+	{
+		double ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += val[i];
+		return ret;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		scanf("%lf" , &p);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			v[ui].push_back(vi);
+		}
+		for(int i = n ; i ; -- i)
+		{
+			int sz = v[i].size();
+			sort(v[i].begin() , v[i].end());
+			for(int j = 0 ; j < sz ; ++ j)
+				ans += query(v[i][j] - 1) * calc(j + 1 , sz);
+			for(int j = 0 ; j < sz ; ++ j)
+				add(v[i][j] , calc(j + 1 , sz));
+		}
+		printf("%.2lf" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
