@@ -1,0 +1,170 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e4 + 5;
+
+	struct node
+	{
+		int l , r , maxn , tag;
+		node(int a , int b)
+		{
+			l = a , r = b , maxn = tag = 0;
+		}
+		node(){}
+	}tree[(3 * Max_n) << 2];
+
+	struct Node
+	{
+		int xi , yi , val;
+		Node(int a , int b , int c)
+		{
+			xi = a , yi = b , val = c;
+		}
+		Node(){}
+	};
+
+	vector<Node> v[Max_n * 2];
+
+	int n , w , h , totx , toty , tot;
+	int lenx , leny , ans;
+
+	ll lshx[Max_n << 1] , lshy[Max_n << 1];
+
+	struct ask
+	{
+		ll posx , li , ri , val;
+		ask(ll a , ll b , ll c , ll d)
+		{
+			posx = a , li = b , ri = c , val = d;
+		}
+		ask(){}
+	}opt[Max_n * 2];
+
+	inline int findx(const int x)
+	{
+		return lower_bound(lshx + 1 , lshx + lenx , x) - lshx;
+	}
+
+	inline int findy(const int x)
+	{
+		return lower_bound(lshy + 1 , lshy + leny , x) - lshy;
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)	return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+	}
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].maxn = max(tree[tr * 2].maxn , tree[tr * 2 + 1].maxn);
+	}
+
+	inline void push_down(const int tr)
+	{
+		if(!tree[tr].tag)
+			return;
+		tree[tr * 2].maxn += tree[tr].tag , tree[tr * 2].tag += tree[tr].tag;
+		tree[tr * 2 + 1].maxn += tree[tr].tag , tree[tr * 2 + 1].tag += tree[tr].tag;
+		tree[tr].tag = 0;
+	}
+
+	void change(const int l , const int r , const int val , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].maxn += val , tree[tr].tag += val;
+			return;
+		}
+		push_down(tr);
+		change(l , r , val , tr * 2);
+		change(l , r , val , tr * 2 + 1);
+		push_up(tr);
+	}
+
+	int maxx , maxy;
+
+	inline void clean()
+	{
+		for(int i = 1 ; i <= lenx ; ++ i)
+			v[i].clear();
+		totx = toty = ans = tot = 0;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		int t = read();
+		while(t --)
+		{
+			clean();
+			n = read() , w = read() - 1 , h = read() - 1;
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				int ui = read() , vi = read() , va = read();
+				lshx[ ++ totx] = ui - w , lshx[ ++ totx] = ui + 1;
+				lshy[ ++ toty] = vi - h , lshy[ ++ toty] = vi;
+				opt[ ++ tot] = ask(ui - w , vi - h , vi , va);
+				opt[ ++ tot] = ask(ui + 1 , vi - h , vi , - va);
+			}
+			sort(lshx + 1 , lshx + totx + 1) , lenx = unique(lshx + 1 , lshx + totx + 1) - lshx;
+			sort(lshy + 1 , lshy + toty + 1) , leny = unique(lshy + 1 , lshy + toty + 1) - lshy;
+			for(int i = 1 ; i <= tot ; ++ i)
+			{
+				int x = findx(opt[i].posx) , yl = findy(opt[i].li) , yr = findy(opt[i].ri);
+				v[x].push_back(Node(yl , yr , opt[i].val));
+			}
+			build(1 , leny , 1);
+			for(int i = 1 ; i <= lenx ; ++ i)
+			{
+				int sz = v[i].size();
+				for(int j = 0 ; j < sz ; ++ j)
+				{
+					int li = v[i][j].xi , ri = v[i][j].yi , va = v[i][j].val;
+					change(li , ri , va , 1);
+				}
+				ans = max(ans , tree[1].maxn);
+			}
+			printf("%d\n" , ans);			
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
