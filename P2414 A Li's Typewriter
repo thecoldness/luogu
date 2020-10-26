@@ -1,0 +1,186 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_m = 1e5 + 5;
+
+	char opt[Max_n];
+
+	int m , son[Max_n][27] , fail[Max_n] , tp , cnt , tot , dfn[Max_n];
+	int ans[Max_n] , fin[Max_n] , ac_tot = 1 , head[Max_n] , siz[Max_n];
+	int tim , fa[Max_n];
+
+	struct node
+	{
+		int pos , id;
+		node(int a , int b)
+		{
+			pos = a , id = b;
+		}
+		node(){}
+	};
+
+	vector<node> v[Max_n];
+
+	queue<int> q;
+
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node(){}
+	}edge[Max_m * 2];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y);
+		head[x] = tot;
+	}
+
+	void dfs_fail(int now , int from)
+	{
+		siz[now] = 1 , dfn[now] = ++ tim;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_fail(nex , now);
+			siz[now] += siz[nex];
+		}
+	}
+
+	inline int find(const int pos , const int ch)
+	{
+		if(son[pos][ch])
+			return son[pos][ch];
+		if(pos == 1)
+			return 1;
+		return find(fail[pos] , ch);
+	}
+
+	inline void build_fail()
+	{
+		q.push(1);
+		while(!q.empty())
+		{
+			int now = q.front();
+			q.pop();
+			for(int i = 0 ; i < 26 ; ++ i)
+			{
+				if(!son[now][i])
+					continue;
+				if(now == 1)
+					fail[son[now][i]] = 1;
+				else	fail[son[now][i]] = find(fail[now] , i);
+				q.push(son[now][i]);
+			}
+		}		
+	}
+
+	int val[Max_n];
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+
+	inline void add(const int pos , const int va)
+	{
+		for(int i = pos ; i <= tim ; i += lowbit(i))
+			val[i] += va;
+	}
+
+	inline int query(int pos)
+	{
+		int ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += val[i];
+		return ret;
+	}
+
+	inline void dfs_trie(const int now)
+	{
+		add(dfn[now] , 1);
+		int sz = v[now].size();
+		for(int i = 0 ; i < sz ; ++ i)
+		{
+			int pos = v[now][i].pos , bel = v[now][i].id;
+			ans[bel] += query(dfn[pos] + siz[pos] - 1) - query(dfn[pos] - 1);
+		}
+		for(int i = 0 ; i < 26 ; ++ i)
+		{
+			if(!son[now][i])	continue;
+			dfs_trie(son[now][i]);
+		}
+		add(dfn[now] , -1);
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		scanf("%s" , opt + 1);
+		int len = strlen(opt + 1) , now = 1;
+		for(int i = 1 ; i <= len ; ++ i)
+		{
+			if(opt[i] == 'P')
+				fin[ ++ cnt] = now;
+			else if(opt[i] == 'B')
+				now = fa[now];
+			else
+			{
+				int ch = opt[i] - 'a';
+				if(!son[now][ch])
+					son[now][ch] = ++ ac_tot , fa[son[now][ch]] = now;
+				now = son[now][ch];
+			}
+		}
+		build_fail();
+		for(int i = 2 ; i <= ac_tot ; ++ i)
+			add_edge(fail[i] , i);
+		dfs_fail(1 , 0);
+		m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			v[fin[vi]].push_back(node(fin[ui] , i));
+		}
+		dfs_trie(1);
+		for(int i = 1 ; i <= m ; ++ i)
+			printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
