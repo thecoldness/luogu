@@ -1,0 +1,178 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int MODX= 39989;
+	const int MODY = 1e9;
+	const int Max_n = 1e5 + 5;
+	const int Max_len = 4e4 + 5;
+	const double eps = 1e-6;
+
+	struct node
+	{
+		int l , r , id;
+		node(int a , int b)
+		{
+			l = a , r = b , id = 0;
+		}
+		node(){}
+	}tree[Max_len << 2];
+
+	struct Node
+	{
+		int xl , yl , xr , yr;
+		Node(int a , int b , int c , int d)
+		{
+			xl = a , yl = b , xr = c , yr = d;
+		}
+		Node(){}
+	}seg[Max_n];
+
+	int ans , n , cnt;
+
+	double tmp;
+
+	void build(int l , int r , int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)	return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+	}
+
+	inline double calc(const int id , const int pos)
+	{
+		int x1 = seg[id].xl , x2 = seg[id].xr , y1 = seg[id].yl , y2 = seg[id].yr;
+		if(x2 == x1)	return pos == x2 ? seg[id].yl : -10;
+		return ((double)y2 - y1) / (x2 - x1) * (pos - x1) + y1;
+	}
+
+	void change(int l , int r , int id , int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return;
+		if(l <= ll && rr <= r)
+		{
+			if(!tree[tr].id)
+			{
+				tree[tr].id = id;
+				return;
+			}
+			double newl = calc(id , ll) , newr = calc(id , rr) , oldl = calc(tree[tr].id , ll) , oldr = calc(tree[tr].id , rr);
+			if(newl > oldl && newr > oldr)
+			{
+				tree[tr].id = id;
+				return;
+			}
+			if(newl <= oldl && newr <= oldr)
+				return;
+			int mid = (ll + rr) >> 1;
+			double newd = calc(id , mid) , oldd = calc(tree[tr].id , mid);
+			if(newl >= oldl)
+			{
+				if(oldd >= newd)
+					change(l , r , id , tr * 2);
+				else
+				{
+					change(l , r , tree[tr].id , tr * 2 + 1);
+					//We don't have to change l and r because either of new or old's l and r all contain tr's right son
+					tree[tr].id = id;
+				}
+				return;
+			}
+			else
+			{
+				if(newd >= oldd)
+				{
+					change(l , r , tree[tr].id , tr * 2);
+					tree[tr].id = id;
+				}
+				else change(l , r , id , tr * 2 + 1);
+				return;
+			}
+		}
+		change(l , r , id , tr * 2);
+		change(l , r , id , tr * 2 + 1);
+	}
+
+	void query(int pos , int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(tree[tr].id)
+		{
+			double ret = calc(tree[tr].id , pos);
+			if(ret > tmp)
+				ans = tree[tr].id , tmp = ret;
+			if(fabs(ret - tmp) <= eps)
+				ans = min(ans , tree[tr].id);
+		}
+		if(ll == rr)
+			return;
+		int mid = (ll + rr) >> 1;
+		if(mid >= pos)
+			query(pos , tr * 2);
+		else query(pos , tr * 2 + 1);
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read();
+		build(1 , 4e4 , 1);
+		while(n --)
+		{
+			int opt = read();
+			if(opt == 1)
+			{
+				int ui = (read() + ans - 1) % MODX + 1 , vi = (read() + ans - 1) % MODY + 1;
+				int ti = (read() + ans - 1) % MODX + 1 , wi = (read() + ans - 1) % MODY + 1;
+				if(ui > ti)
+					swap(ui , ti) , swap(vi , wi);
+				if(ui == ti)
+					vi = wi = max(vi , wi);
+				seg[ ++ cnt] = Node(ui , vi , ti , wi);
+				change(ui , ti , cnt , 1);
+			}
+			else
+			{
+				int ui = (read() + ans - 1) % MODX + 1;
+				tmp = 0.0 , ans = cnt + 1;
+				query(ui , 1);
+				if(ans == cnt + 1)
+					ans = 0;
+				printf("%d\n" , ans);
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
