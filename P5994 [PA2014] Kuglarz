@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e3 + 5;
+
+	struct node
+	{
+		int from , to , val;
+		node(int a , int b , int c)
+		{
+			from = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n * Max_n];
+
+	int head[Max_n] , n , fa[Max_n] , cnt , tot;
+
+	ll ans;
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(x , y , z);
+	}
+
+	inline bool cmp(node a , node b)
+	{
+		return a.val < b.val;
+	}
+
+	int find(int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+
+	inline void merge(const int x , const int y)
+	{
+		fa[find(x)] = find(y);
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 0 ; i <= n ; ++ i)
+			fa[i] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i ; j <= n ; ++ j)
+				add_edge(i - 1 , j , read());
+		sort(edge + 1 , edge + tot + 1 , cmp);
+		for(int i = 1 ; i <= tot ; ++ i)
+		{
+			int x = edge[i].from , y = edge[i].to;
+			if(find(x) == find(y))
+				continue;
+			merge(x , y);
+			++ cnt , ans += (ll)edge[i].val;
+			if(cnt == n)	break;
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
