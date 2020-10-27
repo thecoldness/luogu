@@ -1,0 +1,203 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e4 + 5;
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n + 100];
+
+	int head[Max_n] , tot , s1 , s2 , f ;
+	int n , m , id[105] , l[105] , k;
+
+	ll dis[2][Max_n] , tmp[Max_n];
+
+	struct God
+	{
+		ll val , id;
+		God(int a , ll b)
+		{
+			id = a , val = b;
+		}
+		God(){}
+		bool operator < (const God & a)const
+		{
+			return val > a.val;
+		}
+	};
+
+	priority_queue<God> zzz;
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z);
+		head[x] = tot;
+	}
+
+	bool vis[Max_n];
+
+	inline void MSR(int beg)
+	{
+		memset(tmp , 0x3f , sizeof(tmp));
+		memset(vis , false , sizeof(vis));
+		zzz.push(God(beg , 0));
+		while(!zzz.empty())
+		{
+			int now = zzz.top().id;
+			ll de = zzz.top().val;
+			zzz.pop();
+			if(vis[now])
+				continue;
+			vis[now] = true , tmp[now] = de;
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to;
+				if(vis[nex])	continue;
+				zzz.push(God(nex , de + edge[i].val));
+			}
+		}
+	}
+
+	bool change[105];
+
+	struct Node
+	{
+		int from , to , li , ri;
+		Node(int a , int b , int c , int d)
+		{
+			from = a , to = b , li = c , ri = d;
+		}
+		Node(){}
+	}key[105];
+
+	inline void putwin()
+	{
+		puts("WIN");
+		for(int i = 1 ; i <= k ; ++ i)
+			printf("%d " , edge[id[i]].val);
+		exit(0);
+	}
+
+	inline void putdraw()
+	{
+		puts("DRAW");
+		for(int i = 1 ; i <= k ; ++ i)
+			printf("%d " , edge[id[i]].val);
+		exit(0);
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		s1 = read() , s2 = read() , f = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			add_edge(ui , vi , ti);
+		}
+		for(int i = 1 ; i <= k ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read() , wi = read();
+			l[i] = ti;
+			add_edge(ui , vi , wi);
+			key[i] = Node(ui , vi , ti , wi) , id[i] = tot;
+		}
+		while(true)
+		{
+			bool flag = false;
+			MSR(s1) , memcpy(dis[0] , tmp , sizeof(tmp));
+			MSR(s2) , memcpy(dis[1] , tmp , sizeof(tmp));
+			if(dis[0][f] < dis[1][f])
+				putwin();
+			for(int i = 1 ; i <= k ; ++ i)
+			{
+				int now = key[i].from;
+				if(change[i])	continue;
+				if(dis[0][now] < dis[1][now])
+				{
+					change[i] = flag = true;
+					edge[id[i]].val = l[i];
+				}
+			}
+			if(!flag)
+				break;
+		}
+		MSR(s1) , memcpy(dis[0] , tmp , sizeof(tmp));
+		MSR(s2) , memcpy(dis[1] , tmp , sizeof(tmp));
+		if(dis[0][f] < dis[1][f])
+			putwin();
+		while(true)
+		{
+			bool flag = false;
+			MSR(s1) , memcpy(dis[0] , tmp , sizeof(tmp));
+			MSR(s2) , memcpy(dis[1] , tmp , sizeof(tmp));
+			if(dis[0][f] <= dis[1][f])
+				putdraw();
+			for(int i = 1 ; i <= k ; ++ i)
+			{
+				int now = key[i].from;
+				if(change[i])	continue;
+				if(dis[0][now] <= dis[1][now])
+				{
+					change[i] = flag = true;
+					edge[id[i]].val = l[i];
+				}
+			}
+			if(!flag)
+				break;
+		}
+		MSR(s1) , memcpy(dis[0] , tmp , sizeof(tmp));
+		MSR(s2) , memcpy(dis[1] , tmp , sizeof(tmp));
+		if(dis[0][f] == dis[1][f])
+			putdraw();
+		else puts("LOSE");
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+4 4 1
+1 2 4
+1 3 2
+2 3 2
+1 4 5
+2 4 6
+3 4 1 10000
+*/
