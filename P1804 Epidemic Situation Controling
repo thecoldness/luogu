@@ -1,0 +1,198 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <queue>
+#include <vector>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 3e5 + 5;
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n * 2];
+
+	int logm[Max_n] , fa[Max_n][20] , bel[Max_n] , n;
+	int head[Max_n] , tot , dep[Max_n] , pos[Max_n] , m;
+
+	ll l , r , ans = LLONG_MAX , dis[Max_n][20];
+
+	struct God
+	{
+		ll val , from;
+		God(){}
+		God(ll a , ll b)
+		{
+			val = a , from = b;
+		}
+		bool operator < (const God & a)const
+		{
+			return val > a.val;
+		}
+	};
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+
+	void dfs_pre(const int now , const int from , const int val , const ll max_dep , const int fr)
+	{
+		r = max(r , max_dep);
+		fa[now][0] = from , dis[now][0] = val , dep[now] = dep[from] + 1;
+		bel[now] = fr;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1] , dis[now][i] = dis[now][i - 1] + dis[fa[now][i - 1]][i - 1];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_pre(nex , now , edge[i].val , max_dep + edge[i].val , (now == 1 ? nex : fr));
+		}
+	}
+
+	bool vis[Max_n];
+
+	priority_queue<God> zzz , jzp;
+
+	inline void jump(int now , ll high)
+	{
+		int real = now;
+		for(int i = logm[dep[now]] ; i >= 0 ; -- i)
+		{
+			if(!fa[now][i] || dis[now][i] > high)	continue;
+			high -= dis[now][i] , now = fa[now][i];
+		}
+		if(now == 1)
+			zzz.push(God(high , bel[real]));
+		else vis[now] = true;
+	}
+
+	inline void clean()
+	{
+		memset(vis , false , sizeof(vis));
+		while(!zzz.empty())
+			zzz.pop();
+		while(!jzp.empty())
+			jzp.pop();
+	}
+
+	inline void dfs_check(const int now , const int from)
+	{
+		if(vis[now])
+			return;
+		bool tmp = true , son = false;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			son = true;
+			dfs_check(nex , now);
+			tmp = tmp & vis[nex];
+		}
+		vis[now] |= son && tmp;
+	}
+
+	inline bool check(const ll x)
+	{
+		clean();
+		for(int i = 1 ; i <= m ; ++ i)
+			jump(pos[i] , x);
+		dfs_check(1 , 0);
+		for(int i = head[1] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(vis[nex])	continue;
+			jzp.push(God(edge[i].val , nex));
+		}
+		while(jzp.size() && zzz.size())
+		{
+			while(jzp.size() && vis[jzp.top().from])
+				jzp.pop();
+			if(!jzp.size())
+				break;
+			int fr = zzz.top().from , had = zzz.top().val;
+			int ned = jzp.top().val , bel = jzp.top().from;
+			zzz.pop();
+			if(!vis[fr])
+			{
+				vis[fr] = true;
+				continue;
+			}
+			if(ned > had)
+				continue;
+			vis[bel] = true;
+			jzp.pop();
+		}
+		while(jzp.size() && vis[jzp.top().from])
+			jzp.pop();
+		return jzp.empty();
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		memset(dis , 0x3f , sizeof(dis));
+		for(int i = 1 ; i < n ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			add_edge(ui , vi , ti);
+		}
+		dfs_pre(1 , 0 , 0 , 0 , 1);
+		for(int i = head[1] ; i ; i = edge[i].nex)
+			r += edge[i].val;
+		m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+			pos[i] = read();
+		while(l <= r)
+		{
+			ll mid = (l + r) >> 1;
+			if(check(mid))
+				ans = mid , r = mid - 1;
+			else l = mid + 1;
+		}
+		if(ans == LLONG_MAX)
+			printf("-1");
+		else printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
