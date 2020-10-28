@@ -1,0 +1,184 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef unsigned long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e3 + 5;
+	const int MOD = 1e9 + 7;
+
+	int n , head[Max_n] , tot , t;
+	int siz[Max_n];
+
+	struct node
+	{
+		int nex , to , cla;//0 bef , 1 back
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , cla = c;
+		}
+		node(){}
+	}edge[Max_n * 2];
+
+	ll f[Max_n][Max_n] , jc[Max_n][Max_n] , tmp[Max_n];
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z ^ 1) , head[y] = tot;
+	}
+
+	char opt[5];
+
+	inline void pre_work()
+	{
+		jc[0][0] = 1;
+		for(int i = 1 ; i <= 1000 ; ++ i)
+		{
+			jc[i][0] = 1;
+			for(int j = 1 ; j <= i ; ++ j)
+				jc[i][j] = (jc[i - 1][j - 1] + jc[i - 1][j]) % MOD;
+		}
+	}
+
+	inline int quickpow(ll x , int y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x , ret %= MOD;
+			x *= x , x %= MOD , y >>= 1;
+		}
+		return ret;
+	}
+
+	inline int ni(const int x)
+	{
+		return quickpow(x , MOD - 2);
+	}
+
+	inline int C(const int n , const int m)
+	{
+		// if(n < m)
+		// 	return 0;
+		// return jc[n] * ni(jc[m] * jc[n - m] % MOD) % MOD;TLE
+		return jc[n][m];
+	}
+
+	void dfs_dp(const int now , const int from)
+	{
+		siz[now] = 1 , f[now][1] = 1;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int son = edge[i].to;
+			if(son == from)	continue;
+			dfs_dp(son , now);
+			// memset(tmp , 0 , sizeof(tmp));//TLE
+			if(edge[i].cla)
+			{
+				tmp[0] = 0;
+				for(int j = 1 ; j <= siz[son] ; ++ j)
+				{
+					tmp[j] = tmp[j - 1] + f[son][j];
+					if(tmp[j] > MOD)
+						tmp[j] -= MOD;
+				
+				}
+				for(int j = siz[now] + siz[son] ; j >= 2 ; -- j)
+				{
+					ll tem = 0;// bug -> f[now][j] = 0;
+					for(int k = 1 ; k <= min(j - 1 , siz[now]) ; ++ k)
+					{
+						ll ki = (ll) C(j - 1 , k - 1) * C(siz[now] + siz[son] - j , siz[now] - k) % MOD;
+						ki *= f[now][k] , ki %= MOD;
+						tem += ki * tmp[j - k] % MOD , tem %= MOD;
+					}
+					f[now][j] = tem;
+				}
+				f[now][1] = 0;// bug 
+			}
+			else
+			{
+				tmp[siz[son] + 1] = 0;
+				for(int j = siz[son] ; j >= 0 ; -- j)
+					tmp[j] = (tmp[j + 1] + f[son][j]) % MOD;
+				for(int j = siz[now] + siz[son] - 1 ; j >= 1 ; -- j)
+				{
+					ll tem = 0;// bug -> f[now][j] = 0;
+					for(int k = max(1 , j - siz[son] + 1) ; k <= min(j , siz[now]) ; ++ k)
+					{
+						ll ki = (ll) C(j - 1 , k - 1) * C(siz[now] + siz[son] - j , siz[now] - k) % MOD;
+						ki *= f[now][k] , ki %= MOD;
+						tem += ki * tmp[j - k + 1] % MOD , tem %= MOD;
+					}
+					f[now][j] = tem;	
+				}
+			}
+			siz[now] += siz[son];
+		}
+	}
+
+	inline void clean()
+	{
+		tot = 0;
+		memset(f , 0 , sizeof(f));
+		memset(head , 0 , sizeof(head));
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		t = read();
+		pre_work();
+		while(t --)
+		{
+			clean();
+			n = read();
+			for(int i = 1 ; i < n ; ++ i)
+			{
+				int ui = read();
+				scanf("%s" , opt + 1);
+				int vi = read();
+				if(opt[1] == '<')
+					add_edge(ui , vi , 0);
+				else add_edge(ui , vi , 1);
+			}
+			dfs_dp(0 , 0);
+			int ans = 0;
+			for(int i = 1 ; i <= siz[0] ; ++ i)
+				ans += f[0][i] , ans %= MOD;
+			ans = (ans + MOD) % MOD;
+			printf("%d\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
