@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int MOD = 1e9 + 7;
+	const int Max_m = 2e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_m] , redge[Max_m];
+
+	int head[Max_n] , rhead[Max_n] , n , m , s , t;
+	int tot , in[Max_n];
+
+	ll ans = 1 , f[Max_n];
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x , ret %= MOD;
+			x *= x , x %= MOD , y >>= 1;
+		}
+		return ret;
+	}
+
+	inline int ni(const int x)
+	{
+		return quickpow(x , MOD - 2);
+	}
+
+	ll dfs(const int now)
+	{
+		if(f[now] != -1)
+			return f[now];
+		ll ret = 0;
+		for(int i = rhead[now] ; i ; i = redge[i].nex)
+		{
+			int nex = redge[i].to;
+			ret += dfs(nex) , ret %= MOD;
+		}
+		ret = ret * ni(in[now]) % MOD;
+		return f[now] = ret;
+	}
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		redge[tot] = node(rhead[y] , x) , rhead[y] = tot;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read() , s = read() , t = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			++ in[vi];
+			add_edge(ui , vi);
+		}
+		++ in[t];
+		++ in[1];// bug
+		for(int i = 1 ; i <= n ; ++ i)
+			ans *= 1ll * in[i] , ans %= MOD;
+		memset(f , -1 , sizeof(f));
+		f[t] = ans * ni(in[t]) % MOD;// bug this row used to be before memset
+		ans -= dfs(s);
+		printf("%lld\n" , (ans + MOD) % MOD);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
