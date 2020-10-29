@@ -1,0 +1,170 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int MOD = 1e9 + 7;
+	const int Max_n = 2e5 + 5;
+
+	int son[Max_n][2] , fa[Max_n] , dfn[Max_n];
+	int tim , n , rev[Max_n] , m;
+
+	ll a[Max_n] , sum[Max_n];
+
+	struct control
+	{
+		int li , ri;
+		control(int a , int b)
+		{
+			li = a , ri = b;
+		}
+		control(){}
+	}c[Max_n];
+
+	void dfs_build(const int now)
+	{
+		int li = tim + 1 ,  ri;
+		if(son[now][0])
+			dfs_build(son[now][0]) , fa[son[now][0]] = now;
+		dfn[now] = ++ tim , rev[tim] = now;
+		if(son[now][1])
+			dfs_build(son[now][1]) , fa[son[now][1]] = now;
+		ri = tim , sum[now] = (sum[son[now][0]] + sum[son[now][1]] + a[now]) % MOD;
+		c[now] = control(li , ri);
+	}
+
+	struct node
+	{
+		int l , r;
+		ll val;
+		node(int a , int b)
+		{
+			l = a , r = b , val = 1;
+		}
+		node(){}
+	}tree[Max_n << 2];
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].val = tree[tr * 2].val * tree[tr * 2 + 1].val % MOD;
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)
+		{
+			tree[tr].val = sum[rev[l]];
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+
+	void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].val = val;
+			return;
+		}
+		change(l , r , tr * 2 , val);
+		change(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	ll query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return 1;
+		if(l <= ll && rr <= r)
+			return tree[tr].val;
+		return query(l , r , tr * 2) * query(l , r , tr * 2 + 1) % MOD;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , son[i][0] = read() , son[i][1] = read();
+		dfs_build(1);
+		build(1 , n , 1);
+		while(m --)
+		{
+			int opt = read() , x = read();
+			int ls = son[x][0] , rs = son[x][1] , fx = fa[x];
+			int lrs = son[ls][1] , rls = son[rs][0];
+			if(opt == 0)
+			{
+				if(!son[x][0])
+					continue;
+				c[ls] = c[x] , c[x].li = dfn[ls] + 1;
+				if(fx)
+					son[fx][x == son[fx][1]] = ls;
+				fa[ls] = fx , fa[x] = ls , fa[lrs] = x;
+				son[x][opt] = son[ls][!opt] , son[ls][!opt] = x;
+				sum[x] = (sum[son[x][0]] + sum[son[x][1]] + a[x]) % MOD;
+				change(dfn[x] , dfn[x] , 1 , sum[x]);
+				sum[ls] = (sum[son[ls][0]] + sum[son[ls][1]] + a[ls]) % MOD;
+				change(dfn[ls] , dfn[ls] , 1 , sum[ls]); 
+			}
+			if(opt == 1)
+			{
+				if(!son[x][1])
+					continue;
+				c[rs] = c[x] , c[x].ri = dfn[rs] - 1;
+				if(fx)
+					son[fx][x == son[fx][1]] = rs;
+				fa[rs] = fx , fa[x] = rs , fa[rls] = x;
+				son[x][opt] = son[rs][!opt] , son[rs][!opt] = x;
+				sum[x] = (sum[son[x][0]] + sum[son[x][1]] + a[x]) % MOD;
+				change(dfn[x] , dfn[x] , 1 , sum[x]);
+				sum[rs] = (sum[son[rs][0]] + sum[son[rs][1]] + a[rs]) % MOD;
+				change(dfn[rs] , dfn[rs] , 1 , sum[rs]);				
+			}
+			if(opt == 2)
+			{
+				ll ret = query(c[x].li , c[x].ri , 1);
+				ret = (ret + MOD) % MOD;
+				printf("%lld\n" , ret);
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
