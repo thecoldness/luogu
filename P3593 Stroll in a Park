@@ -1,0 +1,166 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_m = 2e5 + 5;
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_m] , redge[Max_m];
+
+	int head[Max_n] , dis[Max_n] , rhead[Max_n] , tot;
+	int n , m , p , k , t , beg;
+
+	ll got[Max_n][55] , ans;
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		redge[tot] = node(rhead[y] , x , z) , rhead[y] = tot;
+	}
+
+	struct God
+	{
+		int id , val;
+		God(const int a , const int b)
+		{
+			id = a , val = b;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			return val > a.val;
+		}
+	};
+
+	bool rec[Max_n] , inf , vis[Max_n][55];
+
+	priority_queue<God> zzz;
+
+	inline void MSR()
+	{
+		zzz.push(God(1 , 0));
+		while(!zzz.empty())
+		{
+			int now = zzz.top().id , de = zzz.top().val;
+			zzz.pop();
+			if(rec[now])
+				continue;
+			rec[now] = true , dis[now] = de;
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to;
+				if(rec[nex])	continue;
+				zzz.push(God(nex , de + edge[i].val));
+			}
+		}
+	}
+
+	inline void clean()
+	{
+		memset(head , 0 , sizeof(head));
+		memset(rhead , 0 , sizeof(rhead));
+		memset(dis , 0x3f , sizeof(dis));
+		memset(rec , false , sizeof(rec));
+		memset(vis , false , sizeof(vis));
+		memset(got , -1 , sizeof(got));
+		tot = ans = 0;
+		inf = false;
+	}
+
+	inline int dfs_dp(const int now , const int len)
+	{
+		if(len < 0)
+			return 0;
+		if(vis[now][len])
+			return -1;
+		if(got[now][len] != -1)
+			return got[now][len];
+		vis[now][len] = true;
+		ll res = 0;
+		for(int i = rhead[now] ; i ; i = redge[i].nex)
+		{
+			int nex = redge[i].to , va = redge[i].val;
+			int ret = dfs_dp(nex , dis[now] + len - va - dis[nex]);
+			if(ret == -1)
+			{
+				vis[now][len] = false;
+				return -1;
+			}
+			res += ret , res %= p;
+		}
+		if(now == 1 && len == 0)
+			++ res;
+		vis[now][len] = false;
+		return got[now][len] = res;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		t = read();
+		while(t --)
+		{
+			clean();
+			n = read() , m = read() , k = read() , p = read();
+			for(int i = 1 ; i <= m ; ++ i)
+			{
+				int ui = read() , vi = read() , ti = read();
+				add_edge(ui , vi , ti);
+			}
+			MSR();
+			for(int i = k ; i >= 0 ; -- i)
+			{
+				int ret = dfs_dp(n , i);
+				if(ret == -1)
+				{
+					inf = true;
+					break;
+				}
+				ans += ret , ans %= p;
+			}
+			if(inf)
+				puts("-1");
+			else printf("%lld\n" , (ans + p) % p);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
