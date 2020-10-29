@@ -1,0 +1,135 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_len = 2e7 + 5;
+	const int Max_m = 2e5 + 5;
+
+	int fa[Max_len] , dep[Max_len] , son[Max_len][2];
+	int n , m , root[Max_m] , tot;
+
+	void build(const int l , const int r , int& tr)
+	{
+		tr = ++ tot;
+		if(l == r)
+		{
+			fa[tot] = l , dep[tot] = 1;
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , son[tr][0]);
+		build(mid + 1 , r , son[tr][1]);
+	}
+
+	int query(const int tr , const int l , const int r , const int pos)
+	{
+		if(l == r)
+			return tr;
+		int mid = (l + r) >> 1;
+		if(mid >= pos)
+			return query(son[tr][0] , l , mid , pos);
+		else
+			return query(son[tr][1] , mid + 1 , r , pos);
+	}
+
+	void add(const int tr , const int l , const int r , const int pos)
+	{
+		if(l == r)
+		{
+			++ dep[tr];
+			return;
+		}
+		int mid = (l + r) >> 1;
+		if(pos <= mid)
+			add(son[tr][0] , l , mid , pos);
+		else add(son[tr][1] , mid + 1 , r , pos);
+	}
+
+	int find(const int ver , const int pos)
+	{
+		int ret = query(root[ver] , 1 , n , pos);
+		if(fa[ret] == pos)
+			return ret;
+		return find(ver , fa[ret]);
+	}
+
+	void change(int& tr , const int lst , const int l , const int r , const int pos , const int val)
+	{
+		tr = ++ tot;
+		if(l == r)
+		{
+			fa[tr] = val;
+			return;
+		}
+		son[tr][0] = son[lst][0] , son[tr][1] = son[lst][1];
+		int mid = (l + r) >> 1;
+		if(mid >= pos)
+			change(son[tr][0] , son[lst][0] , l , mid , pos , val);
+		else change(son[tr][1] , son[lst][1] , mid + 1 , r , pos , val);
+	}
+	inline void main()
+	{
+		n = read() , m = read();
+		build(1 , n , root[0]);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int opt = read();
+			if(opt == 1)
+			{
+				root[i] = root[i - 1];
+				int ui = read() , vi = read();
+				int fu = find(i , ui) , fv = find(i , vi);
+				if(fa[fu] == fa[fv])	continue;
+				if(dep[fv] < dep[fu])
+					swap(fv , fu);
+				change(root[i] , root[i - 1] , 1 , n , fa[fu] , fa[fv]);
+				if(dep[fv] == dep[fu])
+					add(root[i] , 1 , n , fa[fv]);
+			}
+			if(opt == 2)
+			{
+				int ui = read();
+				root[i] = root[ui];
+			}
+			if(opt == 3)
+			{
+				root[i] = root[i - 1];
+				int ui = read() , vi = read();
+				int fu = find(i , ui) , fv = find(i , vi);
+				if(fa[fu] == fa[fv])
+					puts("1");
+				else puts("0");
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
