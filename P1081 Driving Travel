@@ -1,0 +1,176 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <set>
+#include <cctype>
+#include <cmath>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	struct node
+	{
+		ll val , pos;
+		node(ll a , ll b)
+		{
+			val = a , pos = b;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			return val < a.val;
+		}
+	}tmp[10];
+
+	typedef set<node>::iterator iter;
+
+	set<node> s;
+
+	const int Max_n = 1e5 + 5;
+
+	int ba[Max_n] , bb[Max_n] , n , m , h[Max_n];
+	int f[Max_n][20] , logm[Max_n] , ans;
+
+	struct Node
+	{
+		ll ai , bi;
+		Node(ll a , ll b)
+		{
+			ai = a , bi = b;
+		}
+		Node(){}
+	}g[Max_n][20] , sym;
+
+	Node operator + (Node a , Node b)
+	{
+		return Node(a.ai + b.ai , a.bi + b.bi);
+	}
+
+	inline void pre_work()
+	{
+		ba[n] = ba[n - 1] = 0 , bb[n] = 0 , bb[n - 1] = n;
+		s.insert(node(h[n] , n)) , s.insert(node(h[n - 1] , n - 1));
+		for(int i = n - 2 ; i ; -- i)
+		{
+			s.insert(node(h[i] , i));
+			iter it = s.find(node(h[i] , i));
+			if(it == s.begin())
+			{
+				bb[i] = (*(++ it)).pos , ba[i] = (*(++ it)).pos;
+				continue;
+			}
+			if(++ it == s.end())
+			{
+				--it;
+				bb[i] = (*(-- it)).pos , ba[i] = (*(-- it)).pos;
+				continue;
+			}
+			-- it;
+			tmp[1] = *(-- it);
+			if(it != s.begin())
+			{
+				tmp[2] = *(-- it);
+				++ it;
+			}
+			else tmp[2] = node(INT_MAX , 0);
+			++ it;
+			tmp[3] = *(++ it);
+			if(++ it != s.end())
+				tmp[4] = *(it);
+			else tmp[4] = node(INT_MAX , 0);
+			for(int j = 1 ; j <= 4 ; ++ j)
+				tmp[j].val = abs(tmp[j].val - h[i]);
+			sort(tmp + 1 , tmp + 5);
+			bb[i] = tmp[1].pos , ba[i] = tmp[2].pos;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i][0] = bb[ba[i]];
+		for(int i = 1 ; i <= n ; ++ i)
+			g[i][0] = Node(abs(h[i] - h[ba[i]]) , abs(h[ba[i]] - h[bb[ba[i]]]));
+		for(int j = 1 ; j <= 16 ; ++ j)
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				f[i][j] = f[f[i][j - 1]][j - 1];
+				g[i][j] = g[i][j - 1] + g[f[i][j - 1]][j - 1];
+			}
+	}
+
+	inline Node check(int now , int len)
+	{
+		Node ret = Node(0 , 0);
+		for(int j = logm[n - now + 1] ; j >= 0 ; -- j)
+		{
+			if(!f[now][j])	continue;
+			Node tmp = ret + g[now][j];
+			if(tmp.ai + tmp.bi > len)	continue;
+			ret = tmp , now = f[now][j];
+		}
+		if(ba[now] && ret.ai + ret.bi + abs(h[now] - h[ba[now]]) <= len)
+			ret.ai += abs(h[now] - h[ba[now]]);
+		return ret;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			h[i] = read();
+		pre_work();
+		int xi = read();
+		h[0] = - INT_MAX;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			Node ret = check(i , xi);
+			if(ret.bi == 0)
+			{
+				if(sym.bi != 0)	continue;
+				if(h[ans] < h[i])
+					ans = i;
+				continue;
+			}
+			if(ret.ai * sym.bi < ret.bi * sym.ai)
+				ans = i , sym = ret;
+			if(h[ans] < h[i] &&  ret.ai * sym.bi == ret.bi * sym.ai)
+				ans = i , sym = ret;
+		}
+		printf("%d\n" , ans);
+		int m = read();
+		while(m --)
+		{
+			int si = read() , xi = read();
+			Node ret = check(si , xi);
+			printf("%lld %lld\n" , ret.ai , ret.bi);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
