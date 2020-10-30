@@ -1,0 +1,229 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 3e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 2];
+
+	int head[Max_n] , t , siz[Max_n] , tot , n;
+	int son[Max_n][20] , fa[Max_n];
+
+	ll ans;
+
+	struct Node
+	{
+		int val , id;
+		Node(int a , int b)
+		{
+			val = a , id = b;
+		}
+		Node(){}
+		bool operator <(const Node& a)const
+		{
+			if(val == a.val)
+				return id < a.id;
+			return val < a.val;
+		}
+	};
+
+	set<Node> s[Max_n];
+
+	typedef set<Node>::iterator iter;
+
+	inline void clean()
+	{
+		memset(head , 0 , sizeof(head));
+		ans = tot = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			s[i].clear();
+		memset(siz , 0 , sizeof(siz));
+		memset(son , 0 , sizeof(son));
+		memset(fa , 0 , sizeof(fa));
+	}
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+
+	void dfs_build(const int now , const int from)
+	{
+		siz[now] = 1 , fa[now] = from;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_build(nex , now);
+			s[now].insert(Node(siz[nex] , nex));
+			siz[now] += siz[nex];
+			if(siz[son[now][0]] < siz[nex])
+				son[now][0] = nex;
+		}
+	}
+
+	inline void build()
+	{
+		for(int j = 1 ; j <= 18 ; ++ j)
+			for(int i = 1 ; i <= n ; ++ i)
+				son[i][j] = son[son[i][j - 1]][j - 1];
+	}
+
+	inline void build(const int now)
+	{
+		for(int j = 1 ; j <= 18 ; ++ j)
+			son[now][j] = son[son[now][j - 1]][j - 1];
+	}
+
+	inline bool check(const int now , const int from)
+	{
+		if(!now)	return false;
+		int sta = siz[from] / 2;
+		if((siz[son[now][0]] <= sta) && (siz[from] - siz[now] <= sta))
+			return true;
+		return false;
+	}
+
+	inline int find_heavy(int now , const int from)
+	{
+		int ret = 0;
+		if(check(now , from))
+		{
+			ret += now;
+			if(check(son[now][0] , from))
+				ret += son[now][0];
+			return ret;
+		}
+		for(int i = 18 ; i >= 0 ; -- i)
+		{
+			int nex = son[now][i];
+			if(!nex)	continue;
+			if(check(nex , from))
+			{
+				// ret += nex; bug : The nex heavy is the father of this point
+				// if(check(son[nex][0] , from))
+				// 	ret += son[nex][0];
+				// break;
+				now = nex;
+				continue;
+			}
+			if(siz[nex] > siz[from] / 2)
+				now = nex;
+		}
+		if(check(now , from))
+			ret += now;
+		if(check(fa[now] , from))
+			ret += fa[now];
+		return ret;
+	}
+
+	void dfs_change(const int now , const int from)
+	{
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			iter it;
+			it = s[now].find(Node(siz[nex] , nex));
+			s[now].erase(it);
+			siz[now] -= siz[nex];
+			s[nex].insert(Node(siz[now] , now));
+			it = s[now].end();
+			if(s[now].empty())
+			// bug , here didn't have this "if" sentence , without which the it will assess illegal
+				son[now][0] = 0;
+			else son[now][0] = (*(-- it)).id;
+			build(now);
+			ans += find_heavy(now , now);
+			ans += find_heavy(nex , nex);
+			fa[now] = nex , fa[nex] = nex;
+			siz[nex] += siz[now];// bug : This sentence was before find_heavy
+			it = s[nex].end();
+			son[nex][0] = (*(-- it)).id;
+			build(nex);
+			dfs_change(nex , now);
+			fa[nex] = now , fa[now] = now;
+			siz[nex] -= siz[now];
+			it = s[nex].find(Node(siz[now] , now));
+			s[nex].erase(it);
+			it = s[nex].end();
+			if(s[nex].empty())
+				son[nex][0] = 0;
+			else son[nex][0] = (*(-- it)).id;
+			build(nex) , siz[now] += siz[nex];
+			s[now].insert(Node(siz[nex] , nex));
+			it = s[now].end();
+			son[now][0] = (*(-- it)).id;
+			build(now);
+		}
+	}
+
+	inline void main()
+	{
+		t = read();
+		while(t --)
+		{
+			clean();
+			n = read();
+			for(int i = 1 ; i < n ; ++ i)
+			{
+				int ui = read() , vi = read();
+				add_edge(ui , vi);
+			}
+			dfs_build(1 , 0);
+			build();
+			dfs_change(1 , 0);
+			printf("%lld\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+1
+5
+1 2
+2 3
+3 4
+1 5
+*/
