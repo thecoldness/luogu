@@ -1,0 +1,129 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 5e5 + 5;
+
+	int logm[Max_n] , a[Max_n];
+	int n , l , r , k;
+
+	ll pre[Max_n] , ans;
+
+	struct God
+	{
+		int l , r , bel , pos;
+		ll val;
+		God(int a , int b , int c , ll d , int e)
+		{
+			l = a , r = b , bel = c , val = d , pos = e;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			return val < a.val;
+		}
+	};
+
+	struct node
+	{
+		int id;
+		ll val;
+		node(int a , ll b)
+		{
+			id = a , val = b;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			return val < a.val;
+		}
+	}f[Max_n][20];
+
+	priority_queue<God> zzz;
+
+	inline void build()
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i][0] = node(i , pre[i]);
+		for(int j = 1 ; j <= logm[n] ; ++ j)
+			for(int i = 1 ; i <= n ; ++ i)
+				if(i + (1 << j) - 1 <= n)
+					f[i][j] = max(f[i][j - 1] , f[i + (1 << (j - 1))][j - 1]);
+	}
+
+	inline node find(const int l , const int r)
+	{
+		int len = r - l + 1;
+		return max(f[l][logm[len]] , f[r - (1 << logm[len]) + 1][logm[len]]);
+	}
+
+	inline void main()
+	{
+		n = read() , k = read() , l = read() , r = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , pre[i] = pre[i - 1] + a[i];
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		build();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			if(i + l - 1 > n)
+				break;
+			node ret = find(i + l - 1 , min(i + r - 1 , n));
+			God tmp = God(i + l - 1 , min(i + r - 1 , n) , i , ret.val - pre[i - 1] , ret.id);
+			zzz.push(tmp);
+		}
+		while(k --)
+		{
+			God now = zzz.top();
+			zzz.pop();
+			ans += now.val;
+			node ret;
+			if(now.l <= now.pos - 1)
+			{
+				ret = find(now.l , now.pos - 1);
+				God tmp = God(now.l , now.pos - 1 , now.bel , ret.val - pre[now.bel - 1] , ret.id);
+				zzz.push(tmp);
+			}
+			if(now.pos + 1 <= now.r)
+			{
+				ret = find(now.pos + 1 , now.r);
+				God tmp = God(now.pos + 1 , now.r , now.bel , ret.val - pre[now.bel - 1] , ret.id);
+				zzz.push(tmp);
+			}
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
