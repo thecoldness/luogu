@@ -1,0 +1,146 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <queue>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 205;
+
+	int n , k , hav[Max_n][Max_n] , tot = 1;
+	int s , t , head[Max_n] , beg[Max_n] , dis[Max_n];
+
+	char c[Max_n][Max_n];
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n * Max_n];
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+
+	queue<int> q;
+
+	inline bool bfs()
+	{
+		for(int i = 0 ; i <= 4 * n + 1 ; ++ i)
+			dis[i] = INT_MAX;
+		dis[s] = 0;
+		while(q.size())
+			q.pop();
+		q.push(0);
+		beg[s] = head[s];
+		while(!q.empty())
+		{
+			int now = q.front();
+			q.pop();
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to;
+				if(edge[i].val == 0 || dis[nex] != INT_MAX)
+					continue;
+				beg[nex] = head[nex] , dis[nex] = dis[now] + 1;
+				if(nex == t)
+					return true;
+				q.push(nex);
+			}
+		}
+		return false;
+	}
+
+	int dfs(const int now , int flow)
+	{
+		if(now == t)
+			return flow;
+		int ret = 0;
+		for(int i = beg[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			beg[now] = i;
+			if(dis[nex] != dis[now] + 1 || !edge[i].val)
+				continue;
+			int tmp = dfs(nex , min(flow , edge[i].val));
+			if(!tmp)
+				dis[nex] = INT_MAX;
+			flow -= tmp , ret += tmp;
+			edge[i].val -= tmp , edge[i ^ 1].val += tmp;
+			if(!flow)
+				break;
+		}
+		return ret;
+	}
+
+	inline void build(const int x)
+	{
+		memset(head , 0 , sizeof(head)) , tot = 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+				if(c[i][j] == 'Y')
+					add_edge(i , 3 * n + j , 1);
+				else add_edge(i + n , 2 * n + j , 1);
+		for(int i = 1 ; i <= n ; ++ i)
+			add_edge(i , i + n , k) , add_edge(i + 2 * n , i + 3 * n , k);
+		for(int i = 1 ; i <= n ; ++ i)
+			add_edge(0 , i , x) , add_edge(i + 3 * n , 4 * n + 1 , x);
+	}
+
+	inline void main()
+	{
+		n = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			scanf("%s" , c[i] + 1);
+		s = 0 , t = 4 * n + 1;
+		int l = 0 , r = n , ans = 0;
+		while(l <= r)
+		{
+			int mid = (l + r) >> 1;
+			build(mid);
+			int tmp = 0;
+			while(bfs())
+				tmp += dfs(0 , INT_MAX);
+			if(tmp == n * mid)
+				ans = mid , l = mid + 1;
+			else r = mid - 1;
+		}
+		printf("%d\n" , ans);
+
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
