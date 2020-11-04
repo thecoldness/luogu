@@ -1,0 +1,178 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int n , m , ans[Max_n] , rev[Max_n];
+	int st[Max_n] , tp , tree[Max_n];
+
+	ll cnt;
+
+	struct node
+	{
+		int id , ai , ti;
+		node(int a , int b , int c)
+		{
+			id = a , ai = b , ti = c;
+		}
+		node(){}
+	}e[Max_n] , tmp[Max_n];
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void add(const int pos , const int val)
+	{
+		for(int i = pos ; i <= n ; i += lowbit(i))
+			tree[i] += val;
+	}
+
+	inline int query(const int pos)
+	{
+		int ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += tree[i];
+		return ret;
+	}
+
+	void cdq1(const int l , const int r)
+	{
+		if(l == r)
+			return;
+		int mid = (l + r) >> 1;
+		cdq1(l , mid) , cdq1(mid + 1 , r);
+		int tl = l , tr = mid + 1 , tmpl = l - 1;
+		while(tl <= mid && tr <= r)
+		{
+			while(e[tr].ti > e[tl].ti && tr <= r)
+			{
+				add(e[tr].ai , 1);
+				tmp[ ++ tmpl] = e[tr];
+				st[ ++ tp] = e[tr].ai , ++ tr;
+			}
+			while(e[tl].ti > e[tr].ti && tl <= mid)
+			{
+				tmp[ ++ tmpl] = e[tl];
+				ans[e[tl].id] += query(e[tl].ai - 1) , ++ tl;
+			}
+		}
+		while(tl <= mid)
+		{
+			tmp[ ++ tmpl] = e[tl];
+			ans[e[tl].id] += query(e[tl].ai - 1) , ++ tl;
+		}
+		while(tr <= r)
+			tmp[ ++ tmpl] = e[tr] , ++ tr;
+		for(int i = l ; i <= r ; ++ i)
+			e[i] = tmp[i];
+		while(tp)
+			add(st[tp --] , -1);
+	}
+
+	inline bool cmp(node a , node b)
+	{
+		return a.id < b.id;
+	}
+
+	inline void cdq2(const int l , const int r)
+	{
+		if(l == r)
+			return;
+		int mid = (l + r) >> 1;
+		cdq2(l , mid) , cdq2(mid + 1 , r);
+		int tl = l , tr = mid + 1 , tmpl = l - 1;
+		while(tl <= mid && tr <= r)
+		{
+			while(e[tl].ti > e[tr].ti && tl <= mid)
+			{
+				tmp[ ++ tmpl] = e[tl];
+				st[ ++ tp] = e[tl].ai;
+				add(e[tl].ai , 1) , ++ tl;
+			}
+			while(e[tr].ti > e[tl].ti && tr <= r)
+			{
+				tmp[ ++ tmpl] = e[tr];
+				ans[e[tr].id] += query(n) - query(e[tr].ai) , ++ tr;
+			}
+		}
+		while(tl <= mid)
+			tmp[ ++ tmpl] = e[tl] , ++ tl;
+		while(tr <= r)
+		{
+			tmp[ ++ tmpl] = e[tr];
+			ans[e[tr].id] += query(n) - query(e[tr].ai);
+			++ tr;
+		}
+		for(int i = l ; i <= r ; ++ i)
+			e[i] = tmp[i];
+		while(tp)
+			add(st[tp --] , -1);
+	}
+
+	inline bool cmp2(node a , node b)
+	{
+		return a.ti < b.ti;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			e[i].ai = read() , e[i].id = i , rev[e[i].ai] = i;
+		for(int i = 1 ; i <= m ; ++ i)
+			e[rev[read()]].ti = i;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(!e[i].ti)
+				e[i].ti = m + i;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			cnt += query(n) - query(e[i].ai);
+			add(e[i].ai , 1);
+		}
+		memset(tree , 0 , sizeof(tree));
+		cdq1(1 , n);
+		sort(e + 1 , e + n + 1 , cmp);
+		cdq2(1 , n);
+		sort(e + 1 , e + n + 1 , cmp2);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			printf("%lld\n" , cnt);
+			cnt -= ans[e[i].id];
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
