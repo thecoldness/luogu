@@ -1,0 +1,219 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	
+	struct node
+	{
+		int nex , to , id , val;
+		node(int a , int b , int c , int d)
+		{
+			nex = a , to = b , id = c , val = d;
+		}
+		node(){}
+	}edge[Max_n * 2];
+	
+	int tot , head[Max_n] , dfn[Max_n] , son[Max_n] , siz[Max_n];
+	int tim , rev[Max_n] , n , m , a[Max_n] , dep[Max_n];
+	int top[Max_n] , mp[Max_n];
+	
+	char opt[Max_n];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	void dfs_build(const int now , const int from)
+	{
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)
+			continue;
+			rev[edge[i].id] = from , a[nex] = edge[i].val;
+			dfs_build(nex , now);
+		}
+	}
+	
+	void dfs_son(const int now , const int from)
+	{
+		siz[now] = 1 , dep[now] = dep[from] + 1;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_son(nex , now);
+			siz[now] += siz[nex];
+			if(siz[son[now]] < siz[nex])
+			son[now] = nex;
+		}
+	}
+	
+	void dfs_chain(const int now , const int from , const int tp)
+	{
+		dfn[now] = ++ tim , mp[tim] = now , top[now] = tp;
+		if(!son[now])	return;
+		dfs_chain(son[now] , now , tp);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || nex == son[now])
+				continue;
+			dfs_chain(nex , now , nex);
+		}
+	}
+	
+	struct Node
+	{
+		int l , r , tag , sum , maxn , minn;
+		Node(int a , int b)
+		{
+			l = a , r = b , tag = 1;
+		}
+		Node(){}
+	}tree[Max_n << 2];
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].maxn = max(tree[tr * 2].maxn , tree[tr * 2 + 1].maxn);
+		tree[tr].minn = min(tree[tr * 2].minn , tree[tr * 2 + 1].minn);
+		tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = Node(l , r);
+		if(l == r)
+		{
+			tree[tr].maxn = a[mp[l]] , tree[tr].minn = a[mp[l]];
+			tree[tr].sum = a[mp[l]];
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	inline void update(const int tr)
+	{
+		tree[tr].sum = - tree[tr].sum;
+		swap(tree[tr].maxn , tree[tr].minn);
+		tree[tr].maxn = -tree[tr].maxn , tree[tr].minn = -tree[tr].minn;
+		tree[tr].tag *= -1;
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag == 1)
+			return;
+		update(tr * 2) , update(tr * 2 + 1);
+		tree[tr].tag = 1;
+	}
+	
+	void change_val(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].maxn = tree[tr].minn = tree[tr].sum = val;
+			return;
+		}
+		push_down(tr);
+		change_val(l , r , tr * 2 , val);
+		change_val(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+	
+	void change_sign(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			update(tr);
+			return;
+		}
+		push_down(tr);
+		change_sign(l , r , tr * 2);
+		change_sign(l , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	int query_sum(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return 0;
+		if(l <= ll && rr <= r)
+			return tree[tr].sum;
+		push_down(tr);
+		return query_sum(l , r , tr * 2) + query_sum(l , r , tr * 2 + 1);
+	}
+	
+	int query_min(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return INT_MAX;
+		if(l <= ll && rr <= r)
+			return tree[tr].minn;
+		push_down(tr);
+		return min(query_min(l , r , tr * 2) , query_min(l , r , tr * 2 + 1));
+	}
+	
+	int query_max(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return - INT_MAX;
+		if(l <= ll && rr <= r)
+			return tree[tr].maxn;
+		push_down(tr);
+		return max(query_max(l , r , tr * 2) , query_max(l , r , tr * 2 + 1));
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i < n ; ++ i)
+		{
+			int ui = read() , vi = read() , wi = read();
+			add_edge(ui , vi , i , wi);
+		}
+		dfs_build(0 , 0);
+		dfs_son(0 , 0);
+		dfs_chain(0 , 0 , 0);
+		build(1 , n , 1);
+		
+	}
+}
