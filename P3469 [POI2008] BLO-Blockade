@@ -1,0 +1,108 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_m = 5e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_m * 2];
+
+	int tot , head[Max_n] , siz[Max_n];
+	int dfn[Max_n] , low[Max_n] , tim , n , m;
+
+	bool vis[Max_n];
+
+	ll ans[Max_n];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+
+	void tarjan(const int now)
+	{
+		bool flag = false;
+		int cnt = 0 , sum = 0;
+		dfn[now] = low[now] = ++ tim , siz[now] = 1;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(dfn[nex])
+				low[now] = min(low[now] , dfn[nex]);
+			else
+			{
+				tarjan(nex);
+				low[now] = min(low[now] , low[nex]);
+				siz[now] += siz[nex];
+				// siz[now] += siz[nex] , ++ cnt; bug
+				if(low[nex] >= dfn[now])
+				{
+					++ cnt;
+					ans[now] += (ll)siz[nex] * (n - siz[nex] - 1);
+					sum += siz[nex];
+					if(now != 1)
+						flag = true;
+				}
+			}
+		}
+		if((now == 1 && cnt > 1) || flag)
+			vis[now] = true;
+		ans[now] += 2 * (n - 1);
+		if(vis[now])
+			ans[now] += 1ll * (n - sum - 1) * sum;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+			add_edge(read() , read());
+		tarjan(1);
+		for(int i = 1 ; i <= n ; ++ i)
+			// if(!vis[i])
+			// 	printf("%d\n" , 2 * (n - 1));
+			// else printf("%lld\n" , 1ll * 2 * (n - 1) + 2 * (siz[i] - 1) * (n - siz[i])); bug
+			printf("%lld\n" , ans[i]); 
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
