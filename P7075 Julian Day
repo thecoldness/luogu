@@ -1,0 +1,173 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 3e6 + 5;
+	const int MOD400 = 146097;
+
+	struct node
+	{
+		int y , m , d;
+		node(int a , int b , int c)
+		{
+			y = a , m = b , d = c;
+		}
+		node(){}
+	}a[Max_n];
+
+	int t , r[20] , p[20] , all , year[MOD400 + 5];
+	int base;
+
+	ll n;
+
+	inline void print(node a)
+	{
+		if(a.y <= 0)
+			-- a.y;
+		if(a.y < 0)
+			printf("%d %d %d BC\n" , a.d , a.m , -a.y);
+		else printf("%d %d %d\n" , a.d , a.m , a.y);
+	}
+
+	inline bool run(const int x)
+	{
+		return ((x % 100 != 0) && (x % 4 == 0)) || ((x % 100 == 0) && (x % 400 == 0));
+	}
+
+	inline void pre_work()
+	{
+		r[1] = 31 , r[2] = 29 , r[3] = 31 , r[4] = 30 , r[5] = 31 , r[6] = 30;
+		r[7] = 31 , r[8] = 31 , r[9] = 30 , r[10] = 31 , r[11] = 30 , r[12] = 31;
+		for(int i = 1 ; i <= 12 ; ++ i)
+			p[i] = r[i];
+		-- p[2];
+		for(int i = 1 ; i <= 12 ; ++ i)
+			p[i] += p[i - 1] , r[i] += r[i - 1];
+		for(int i = 1 ; i <= 3e6 ; ++ i)
+		{
+			if(a[i - 1].y == 1582 && a[i - 1].m == 10 && a[i - 1].d == 4)
+			{
+				a[i] = a[i - 1];
+				a[i].d = 15;
+				continue;
+			}
+			if(((a[i - 1].y % 4 == 0) && a[i - 1].y <= 1582) || (a[i - 1].y > 1582 && run(a[i - 1].y)))
+			{
+				a[i] = a[i - 1];
+				++ a[i].d;
+				if(a[i].d > r[a[i].m] - r[a[i].m - 1])
+					a[i].d = 1 , ++ a[i].m;
+				if(a[i].m > 12)
+					a[i].m = 1 , ++ a[i].y;
+			}
+			else
+			{
+				a[i] = a[i - 1];
+				++ a[i].d;
+				if(a[i].d > p[a[i].m] - p[a[i].m - 1])
+					a[i].d = 1 , ++ a[i].m;
+				if(a[i].m > 12)
+					a[i].m = 1 , ++ a[i].y;
+			}
+			if(a[i].y == 1585)
+			{
+				all = i - 1;
+				break;
+			}
+		}
+		for(int i = 1 ; i <= MOD400 ; ++ i)
+		{
+			year[i] = year[i - 1];
+			// if(i % 100 == 0) bug
+			if((i + 1584) % 100 == 0)
+			{
+				if((i + 1584) % 400 == 0)
+					year[i] += 366;
+				else year[i] += 365;
+			}
+			else
+			{
+				if(i % 4 == 0)
+					year[i] += 366;
+				else year[i] += 365;
+			}
+		}
+	}
+
+	inline void main()
+	{
+		a[0] = node(-4712 , 1 , 1);
+		pre_work();
+		t = read();
+		while(t --)
+		{
+			n = read();
+			if(n <= all)
+				print(a[n]);
+			else
+			{
+				n -= all;
+				base = 1584;
+				base += 400 * (n / MOD400) , n %= MOD400;
+				if(!n)
+				{
+					print(node(base , a[all].m , a[all].d));
+					continue;
+				}
+				int yy = lower_bound(year + 1 , year + MOD400 + 1 , n) - year;
+				base += yy;
+				n -= year[yy - 1];
+				if(run(base))
+				{
+					int mm = lower_bound(r + 1 , r + 13 , n) - r;
+					n -= r[mm - 1];
+					print(node(base , mm , n));
+				}
+				else
+				{
+					int mm = lower_bound(p + 1 , p + 13 , n) - p;
+					n -= p[mm - 1];
+					print(node(base , mm , n));
+				}
+			}
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+1
+154059721
+
+1 2 417089
+*/
