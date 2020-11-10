@@ -1,0 +1,75 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 20;
+
+	ll f[15][Max_n];
+
+	int t , n , k , jzp;
+
+	inline void main()
+	{
+		t = read();
+		while(t -- )
+		{
+			n = read() , k = read() , jzp = read();
+			memset(f , 0 , sizeof(f));
+			f[0][0] = 1;
+			for(int i = 1 ; i <= k ; ++ i)
+				for(int j = i ; j <= (n + 1) * k ; ++ j)
+				{
+					// f[i][j] = (f[i][j - i] + f[i - 1][j - i]) % jzp; bug 
+					f[i][j] = (f[i][j - i] + f[i - 1][j - i]) % jzp;
+					if(j - 2 * n - 2 >= 0)
+						f[i][j] -= f[i - 1][j - 2 * n - 2] , f[i][j] %= jzp;				
+				}
+
+			printf("%lld\n" , (f[k][(n + 1) * k] + jzp) % jzp);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+10 
+6 5 10000  
+4 1 10000 
+9 6 10000 
+4 6 10000 
+5 1 10000 
+8318 10 9973 
+9862 9 9973 
+8234 9 9973 
+9424 9 9973 
+9324 9 9973
+*/
