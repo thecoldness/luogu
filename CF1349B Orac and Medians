@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = (c == '-');
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int t , a[Max_n] , n , k;
+
+	bool wqqka , hav;
+
+	inline void main()
+	{
+		t = read();
+		while(t --)
+		{
+			n = read() , k = read();
+			hav = false;
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				a[i] = read();
+				if(a[i] == k)
+					hav = true;
+			}
+			if(!hav)
+			{
+				puts("no");
+				continue;
+			}
+			if(n == 1)
+			{
+				puts("yes");
+				continue;
+			}
+			wqqka = false;
+			for(int i = 1 ; i < n ; ++ i)
+				if(a[i] >= k && a[i + 1] >= k)
+				{
+					puts("yes") , wqqka = true;
+					break;
+				}
+			if(wqqka)
+				continue;
+			for(int i = 1 ; i < n - 1 ; ++ i)
+				if(a[i] >= k && a[i + 2] >= k)
+				{
+					puts("yes") , wqqka = true;
+					break;
+				}
+			if(wqqka)
+				continue;
+			puts("no");
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
