@@ -1,0 +1,122 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1505;
+	
+	int n , m , a[Max_n][Max_n] , pre[Max_n][Max_n] , k , ans , logm[Max_n] , maxn[20][Max_n];
+	int lu[Max_n][Max_n] , ru[Max_n][Max_n] , ld[Max_n][Max_n] , rd[Max_n][Max_n];
+	
+	inline int sum(const int x , const int y)
+	{
+		int ret = pre[x + k - 1][y + k - 1] + pre[x - 1][y - 1];
+		ret -= pre[x - 1][y + k - 1] , ret -= pre[x + k - 1][y - 1];
+		return ret;
+	}
+	
+	inline void build()
+	{
+		for(int j = 1 ; j <= 15 ; ++ j)
+			for(int i = 1 ; i <= 1500 ; ++ i)
+				if(i + (1 << j) - 1 <= 1500)
+					maxn[j][i] = max(maxn[j - 1][i] , maxn[j - 1][(1 << (j - 1)) + i]);
+				else break;
+	}
+	
+	inline int query(const int l , const int r)
+	{
+		int len = r - l + 1;
+		return max(maxn[logm[len]][l] , maxn[logm[len]][r - (1 << logm[len]) + 1]);
+	}
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= m ; ++ j)
+				a[i][j] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= m ; ++ j)
+				pre[i][j] = pre[i - 1][j] + pre[i][j - 1] - pre[i - 1][j - 1] + a[i][j];
+		for(int i = k ; i <= n ; ++ i)
+			for(int j = k ; j <= m ; ++ j)
+				lu[i][j] = max(lu[i - 1][j] , max(lu[i][j - 1] , sum(i - k + 1 , j - k + 1)));
+		for(int i = k ; i <= n ; ++ i)
+			for(int j = m - k + 1 ; j ; -- j)
+				ru[i][j] = max(ru[i - 1][j] , max(ru[i][j + 1] , sum(i - k + 1 , j)));
+		for(int i = n - k + 1 ; i ; -- i)
+			for(int j = k ; j <= m ; ++ j)
+				ld[i][j] = max(ld[i + 1][j] , max(ld[i][j - 1] , sum(i , j - k + 1)));
+		for(int i = n - k + 1 ; i ; -- i)
+			for(int j = m - k + 1 ; j ; -- j)
+				rd[i][j] = max(rd[i + 1][j] , max(rd[i][j + 1] , sum(i , j)));
+		for(int i = k ; i <= n - k ; ++ i)
+			for(int j = k ; j <= m - k ; ++ j)
+				ans = max(ans , lu[i][j] + ru[i][j + 1] + rd[i + 1][1]);
+		for(int i = n - k + 1 ; i > k ; -- i)
+			for(int j = k ; j <= m - k ; ++ j)
+				ans = max(ans , ld[i][j] + rd[i][j + 1] + ru[i - 1][1]);
+		for(int i = k ; i <= n - k ; ++ i)
+			for(int j = k + 1 ; j <= m - k + 1 ; ++ j)
+				ans = max(ans , lu[n][j - 1] + ru[i][j] + rd[i + 1][j]);
+		for(int i = k ; i <= n - k ; ++ i)
+			for(int j = k ; j <= m - k ; ++ j)
+				ans = max(ans , lu[i][j] + ld[i + 1][j] + rd[1][j + 1]);
+		for(int i = 2 ; i <= 1500 ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int j = k + 1 ; j <= m - 2 * k + 1 ; ++ j)
+			for(int i = 1 ; i <= n - k + 1 ; ++ i)
+				maxn[0][j] = max(maxn[0][j] , sum(i , j));
+		build();
+		for(int l = k ; l <= m - 2 * k ; ++ l)
+			for(int r = l + k + 1 ; r <= m - k + 1 ; ++ r)
+				ans = max(ans , ld[1][l] + rd[1][r] + query(l + 1 , r - k));
+		memset(maxn , 0 , sizeof(maxn));
+		for(int i = k + 1 ; i <= n - 2 * k + 1 ; ++ i)
+			for(int j = 1 ; j <= m - k + 1 ; ++ j)
+				maxn[0][i] = max(maxn[0][i] , sum(i , j));
+		build();
+		for(int l = k ; l <= n - 2 * k ; ++ l)
+			for(int r = l + k + 1 ; r <= n - k + 1 ; ++ r)
+				ans = max(ans , ru[l][1] + rd[r][1] + query(l + 1 , r - k));
+		printf("%d" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+6 2 2
+1 1
+1 1
+2 2
+2 2
+4 4
+4 4
+28
+*/
