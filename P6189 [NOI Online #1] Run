@@ -1,0 +1,65 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int n , jzp , b;
+
+	ll f[Max_n] , /*g[Max_n][320] bug*/ans , g[320][Max_n];
+
+	inline void main()
+	{
+		n = read() , jzp = read();
+		b = sqrt(n);
+		f[0] = 1;
+		for(int i = 1 ; i <= b ; ++ i)
+			for(int j = i ; j <= n ; ++ j)
+				f[j] += f[j - i] , f[j] %= jzp;
+		g[0][0] = 1;
+		for(int i = 1 ; i <= n / (b + 1) ; ++ i)
+			for(int j = (b + 1) * i ; j <= n ; ++ j)
+				g[i][j] = (g[i - 1][j - (b + 1)] + g[i][j - i]) % jzp;
+		for(int i = 0 ; i <= n ; ++ i)
+		{
+			ll sum = 0;
+			for(int j = 0 ; j <= n / (b + 1) ; ++ j)
+				sum += g[j][n - i] , sum %= jzp;
+			ans += sum * f[i] % jzp , ans %= jzp;
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
