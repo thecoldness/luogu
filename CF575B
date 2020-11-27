@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int jzp = 1e9 + 7;
+	
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n * 2];
+	
+	int n , k , vd[Max_n] , vu[Max_n] , q[Max_n * 10] , ans;
+	int head[Max_n] , tot , dep[Max_n] , fa[Max_n][20];
+	int logm[Max_n] , tmp[5] , cntd[Max_n] , cntu[Max_n];
+	
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , 0) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+	
+	void dfs_tree(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , fa[now][0] = from;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1];		
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	{vu[now] = edge[i].val; continue;}
+			vd[nex] = edge[i].val;
+			dfs_tree(nex , now);
+		}
+	}
+	
+	inline int lca(int x , int y)
+	{
+		while(dep[x] > dep[y])
+			x = fa[x][logm[dep[x] - dep[y]]];
+		while(dep[y] > dep[x])
+			y = fa[y][logm[dep[y] - dep[x]]];
+		if(x == y)	return x;
+		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+		{
+			if(fa[x][i] == fa[y][i])	continue;
+			x = fa[x][i] , y = fa[y][i];
+		}
+		return fa[x][0];
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x , ret %= jzp;
+			x *= x , x %= jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)
+			ret -= jzp;
+		return ret;
+	}
+	
+	inline void dfs_ans(const int now , const int from)
+	{
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_ans(nex , now);
+			cntd[now] += cntd[nex] , cntu[now] += cntu[nex];
+		}
+		if(vd[now])
+			ans = add(ans , quickpow(2 , cntd[now]) - 1);
+		if(vu[now])
+			ans = add(ans , quickpow(2 , cntu[now]) - 1);
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int i = 1 ; i < n ; ++ i)
+		{
+			int ui = read() , wi = read() , qi = read();
+			add_edge(ui , wi , qi);
+		}
+		dfs_tree(1 , 0);
+		q[0] = 1;
+		k = read();
+		for(int i = 1 ; i <= k ; ++ i)
+		{
+			q[i] = read();
+			if(q[i] == q[i - 1])	continue;
+			int l = lca(q[i - 1] , q[i]);
+			if(l == q[i - 1])
+				++ cntd[q[i]] , -- cntd[l];
+			else if(l == q[i])
+				++ cntu[q[i - 1]] , -- cntu[l];
+			else
+			{
+				++ cntu[q[i - 1]] , -- cntu[l];
+				++ cntd[q[i]] , -- cntd[l];
+			}
+		}
+		dfs_ans(1 , 0);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
