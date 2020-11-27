@@ -1,0 +1,123 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3005;
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 2];
+	
+	int head[Max_n] , tot , n , fa[Max_n][20] , siz[Max_n];
+	int dep[Max_n] , logm[Max_n] , chain[Max_n][Max_n];
+	
+	ll ans , f[Max_n][Max_n];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	void dfs_tree(const int now , const int from)
+	{
+		fa[now][0] = from , siz[now] = 1 , dep[now] = dep[from] + 1;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+//			dfs_tree(now , nex); bug!!!
+			dfs_tree(nex , now);
+			siz[now] += siz[nex];
+		}
+	}
+	
+	inline bool lca(int x , int y)
+	{
+		if(chain[x][y] != -1)	return chain[x][y];
+		while(dep[x] > dep[y])
+			x = fa[x][logm[dep[x] - dep[y]]];
+		while(dep[y] > dep[x])
+			y = fa[y][logm[dep[y] - dep[x]]];
+		return chain[x][y] = (x == y);
+	}
+	
+	ll dfs(const int up , const int down , const int from)
+	{
+		if(f[up][down] != -1)	return f[up][down];
+		ll ret = 0;
+//		if(up != 1) ret = dfs(fa[up] , down , up); bug
+		for(int i = head[up] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			ret = max(ret , dfs(nex , down , up));
+		}
+		for(int i = head[down] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == fa[down][0])	continue;
+			ret = max(ret , dfs(up , nex , from));
+		}
+		ll val = lca(up , down) ? 1ll * siz[down] * (n - siz[from]) : 1ll * siz[down] * siz[up];
+		return f[up][down] = ret + val;
+	}
+		
+	inline void main()
+	{
+		memset(f , -1 , sizeof(f)) , memset(chain , -1 , sizeof(chain));
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_tree(1 , 0);
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = head[i] ; j ; j = edge[j].nex)
+			{
+				int nex = edge[j].to;
+				if(nex == fa[i][0])	continue;
+				ans = max(ans , dfs(i , nex , nex));
+			}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
