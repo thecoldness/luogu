@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	const int jzp = 998244353;
+	const int inv2 = 499122177;
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}	
+	
+	int n , m , k , t;
+	
+	inline int ni(const int x)
+	{
+		if(x == 2)	return inv2;
+		return quickpow(x , jzp - 2);
+	}
+	
+	ll jc[Max_n] , ans , tmp , inv[Max_n];
+	
+	inline int C(const int x , const int y)
+	{
+		if(y > x)	return 0;
+		return (jc[x] * inv[y] % jzp) * inv[x - y] % jzp;
+//		return jc[x] * ni(jc[y] * jc[x - y] % jzp) % jzp;
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)
+			ret -= jzp;
+		return ret;
+	}
+	
+	inline void main()
+	{
+		t = read();
+		jc[0] = 1 , inv[0] = 1;
+		for(int i = 1 ; i <= 2e5 ; ++ i)
+			jc[i] = jc[i - 1] * i % jzp , inv[i] = ni(jc[i]);
+		while(t --)
+		{
+			n = read() , m = read() , k = read();
+			ans = 0 , tmp = 0;
+			if(k % 2)
+			{
+				for(int i = 1 ; i <= min(n , k) ; i += 2)
+					ans = add(C(n , i) , ans);
+				for(int i = 1 ; i <= min(m , k) ; i += 2)
+					tmp = add(C(m , i) , tmp);
+				ans = ans * tmp % jzp;
+			}
+			else
+			{
+				for(int i = 0 ; i <= min(n , k) ; i += 2)
+					ans = add(ans , C(n , i));
+				for(int i = 0 ; i <= min(m , k) ; i += 2)
+					tmp = add(C(m , i) , tmp);
+				ans = ans * tmp % jzp;
+			}
+			if(n % 2 || m % 2)	{printf("%lld\n" , ans); continue;}
+			ll wi = 0 , qi = 0;
+			if(k % 2)
+			{
+				for(int i = 1 ; i <= min(n , k) ; i += 2)
+					if(i <= k && n - i <= k)	wi = add(wi , C(n , i));
+				for(int i = 1 ; i <= min(m , k) ; i += 2)
+					if(i <= k && m - i <= k)	qi = add(qi , C(m , i));
+				wi = wi * qi % jzp * ni(2) % jzp , ans = (ans - wi + jzp) % jzp;
+				printf("%lld\n" , ans);
+			}
+			else
+			{
+				for(int i = 0 ; i <= min(n , k) ; i += 2)
+					if(i <= k && n - i <= k)	wi = add(wi , C(n , i));
+				for(int i = 0 ; i <= min(m , k) ; i += 2)
+					if(i <= k && m - i <= k)	qi = add(qi , C(m , i));
+				wi = wi * qi % jzp * ni(2) % jzp , ans = (ans - wi + jzp) % jzp;
+				printf("%lld\n" , ans);
+			}
+		}
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
