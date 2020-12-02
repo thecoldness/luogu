@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	const int Max_n = 105;
+	const int jzp = 2009;
+	
+	int n , tot , mp[15][15] , t , stp;
+	
+	char w[15][15];
+	
+	struct Matrix
+	{
+		int h[Max_n][Max_n];
+		int* operator[](const int a)
+		{
+			return h[a];
+		}
+		inline void clear()
+		{
+			memset(h , 0 , sizeof(h));
+		}
+		inline void init()
+		{
+			for(int i = 1 ; i <= tot ; ++ i)
+				h[i][i] = 1;
+		}
+	}beg;
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)
+			ret -= jzp;
+		return ret;
+	}
+	
+	Matrix operator * (Matrix a , Matrix b)
+	{
+		Matrix ret; ret.clear();
+		for(int i = 1 ; i <= tot ; ++ i)
+			for(int j = 1 ; j <= tot ; ++ j)
+				for(int k = 1 ; k <= tot ; ++ k)
+					ret[i][j] = add(ret[i][j] , a[i][k] * b[k][j] % jzp);
+		return ret;
+	}
+	
+	Matrix operator ^ (Matrix x , int y)
+	{
+		Matrix ret; ret.clear(); ret.init();
+		while(y)
+		{
+			if(y & 1)
+				ret = ret * x;
+			x = x * x , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline void main()
+	{
+		scanf("%d %d" , &n , &t);
+		for(int i = 1 ; i <= n ; ++ i)
+			scanf("%s" , w[i] + 1);
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+				stp = max(stp , w[i][j] - '0');
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 0 ; j < stp ; ++ j)
+				mp[i][j] = ++ tot;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 0 ; j < stp - 1 ; ++ j)
+				beg[mp[i][j]][mp[i][j + 1]] += 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+				if(w[i][j] != '0')
+					beg[mp[i][w[i][j] - '1']][mp[j][0]] += 1;
+//		beg = beg ^ (t - 1); bug
+		beg = beg ^ t;
+		printf("%d\n" , beg[mp[1][0]][mp[n][0]]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
