@@ -1,0 +1,87 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e6 + 5;
+	const int Max_dot = 3e7 + 5;
+	
+	int val[Max_dot] , n , m , root[Max_n];
+	int w[Max_n] , son[Max_dot][2] , tot;
+	
+	void build(const int l , const int r , int &tr)
+	{
+		tr = ++ tot;
+		if(l == r){val[tr] = w[l]; return;}
+		int mid = (l + r) >> 1;
+		build(l , mid , son[tr][0]); build(mid + 1 , r , son[tr][1]);
+	}
+	
+	void update(int &now , const int lst , const int l , const int r , const int pos , const int va)
+	{
+		now = ++ tot;
+		if(l == r){val[now] = va; return;}
+		int mid = (l + r) >> 1;
+		son[now][0] = son[lst][0] , son[now][1] = son[lst][1];
+		if(pos <= mid)	update(son[now][0] , son[lst][0] , l , mid , pos , va);
+		else update(son[now][1] , son[lst][1] , mid + 1 , r , pos , va);
+	}
+	
+	int query(const int l , const int r , const int tr , const int pos)
+	{
+		if(l == r)	return val[tr];
+		int mid = (l + r) >> 1;
+		if(pos <= mid)	return query(l , mid , son[tr][0] , pos);
+		return query(mid + 1 , r , son[tr][1] , pos);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		build(1 , n , root[0]);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int vi = read() , type = read() , wi = read();
+			if(type == 1)
+			{
+				int qi = read();
+				update(root[i] , root[vi] , 1 , n , wi , qi);
+			}
+			else
+			{
+				root[i] = root[vi];
+				printf("%d\n" , query(1 , n , root[i] , wi));
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
