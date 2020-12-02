@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	ll b;
+	
+	int a , m , phi , jzp;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	inline int gcd(int a , int b)
+	{
+		return b == 0 ? a : gcd(b , a % b);
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		if(y == 0)	return 0;// bug
+		while(y)
+		{
+			if(y & 1)
+				ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline void main()
+	{
+		a = read() , jzp = phi = m = read();
+		for(int i = 2 ; i * i <= m ; ++ i)
+		{
+			if(m % i)	continue; // bug
+//			phi *= (i - 1) / i; bug
+			phi /= i , phi *= i - 1;
+			while(m % i == 0)
+				m /= i;
+		}
+		if(m != 1)	phi /= m , phi *= m - 1;// bug
+		char w;bool wqqka = false;
+		w = getchar();
+		while(!isdigit(w))
+			w = getchar();
+		while(isdigit(w))
+		{
+			b = b * 10 + (w ^ 48);
+			if(b >= phi)	b %= phi , wqqka = true;
+			w = getchar();
+		}
+		if(gcd(a , m) == 1)
+			printf("%d\n" , quickpow(a , b));
+		else
+		{
+			if(wqqka)	printf("%d\n" , quickpow(a , b + phi));
+			else printf("%d\n" , quickpow(a , b));
+		}
+//		printf("%d" , phi);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+2 4 4
+*/
