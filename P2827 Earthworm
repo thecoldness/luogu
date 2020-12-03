@@ -1,0 +1,76 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int Max_m = 7e6 + 5;
+	
+	int q1[Max_n + Max_m] , q2[Max_m + Max_n] , u , v , head = 1 , tot;
+	int t , q , n , m , w[Max_n] , head1 = 1 , head2 = 1 , all[Max_n + Max_m];
+	
+	inline void main()
+	{
+		memset(q1 , -0x3f , sizeof(q1)) , memset(q2 , -0x3f , sizeof(q2));
+		memset(w , -0x3f , sizeof(w));
+		n = read() , m = read() , q = read();
+		u = read() , v = read() , t = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		sort(w + 1 , w + n + 1);reverse(w + 1 , w + n + 1);
+//		q1[1] = 1ll * w[1] * u / v , q2[1] = w[1] - q1[1];
+//		++ head;// bug
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int now = max(w[head] , max(q1[head1] , q2[head2]));
+			if(now == w[head])
+				++ head;
+			else if(now == q1[head1])
+				++ head1;
+			else ++ head2;
+			now += (i - 1) * q;
+			if(i % t == 0)	printf("%d " , now);
+//			q1[i] = 1ll * now * u / v - i * q , q2[i] = now - q1[i] - i * q;bug
+			q1[i] = 1ll * now * u / v , q2[i] = now - q1[i];
+			q1[i] -= i * q , q2[i] -= i * q;
+		}
+		for(int i = head ; i <= n ; ++ i)
+			all[ ++ tot] = w[i];
+		for(int i = head1 ; i <= m ; ++ i)
+			all[ ++ tot] = q1[i];
+		for(int i = head2 ; i <= m ; ++ i)
+			all[ ++ tot] = q2[i];
+		sort(all + 1 , all + tot + 1); reverse(all + 1 , all + tot + 1);
+		puts("");
+		for(int i = t ; i <= tot ; i += t)
+			printf("%d " , all[i] + m * q);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
