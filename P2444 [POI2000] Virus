@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	const int Max_n = 2005;
+	const int Max_dot = 3e4 + 5;
+	
+	int n , son[Max_dot][2] , fail[Max_dot] , tot = 1;
+	
+	bool ed[Max_dot];
+	
+	char w[Max_n][Max_dot];
+	
+	inline void insert(char *a)
+	{
+		int now = 1 , len = strlen(a + 1);
+		for(int i = 1 ; i <= len ; ++ i)
+		{
+			int ch = a[i] - '0';
+			if(!son[now][ch])	son[now][ch] = ++ tot;
+			now = son[now][ch];
+		}
+		ed[now] = true;
+	}
+	
+	queue<int> q;
+	
+	bool vis[Max_dot] , at[Max_dot];
+	
+	void dfs(const int now)
+	{
+		vis[now] = true;
+		for(int i = 0 ; i < 2 ; ++ i)
+		{
+			int nex = son[now][i];
+			if(ed[nex] || !nex) continue;
+//			if(nex != 1 && vis[nex]){puts("TAK");exit(0);} bug
+			if(vis[nex]){puts("TAK");exit(0);}
+			if(!at[nex]){at[nex] = true; dfs(nex);}
+		}
+		vis[now] = false;
+	}
+	
+	inline void main()
+	{
+		scanf("%d" , &n);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			scanf("%s" , w[i] + 1);
+			insert(w[i]);
+		}
+		q.push(1);
+		while(!q.empty())
+		{
+			int now = q.front(); q.pop();
+			for(int i = 0 ; i < 2 ; ++ i)
+			{
+				int nex = son[now][i];
+				if(!nex)
+				{
+					son[now][i] = (now == 1 ? 1 : son[fail[now]][i]);
+					continue;
+				}
+				fail[son[now][i]] = now == 1 ? 1 : son[fail[now]][i];
+				ed[son[now][i]] |= ed[fail[son[now][i]]];// bug
+				q.push(son[now][i]);
+			}
+		}
+		at[1] = true;
+		dfs(1);
+		puts("NIE");
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+3
+101 
+010 
+11
+*/
