@@ -1,0 +1,108 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e4 + 5;
+	
+	int w[Max_n] , B , n , q[Max_n];
+	int m , k;
+	
+	ll tmp[Max_n];
+	
+	inline int get_block(const int x)
+	{
+		return (x - 1 + B) / B;
+	}
+	
+	struct node
+	{
+		int li , ri , id;
+		node(int a , int b , int c)
+		{
+			li = a , ri = b , id = c;
+		}
+		node(){}
+	}a[Max_n];
+	
+	inline bool cmp(node a , node b)
+	{
+		if(get_block(a.li) != get_block(b.li))
+			return get_block(a.li) < get_block(b.li);
+		return a.ri < b.ri;
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		B = sqrt(n);
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int wi = read() , qi = read();
+			a[i] = node(wi , qi , i);
+		}
+		sort(a + 1 , a + m + 1 , cmp);
+		int wl = 1 , wr = 0;
+		ll ans = 0;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ql = a[i].li , qr = a[i].ri , bel = a[i].id;
+			while(wl > ql)
+			{
+				-- wl , ans -= q[w[wl]] * q[w[wl]];
+				++ q[w[wl]] , ans += q[w[wl]] * q[w[wl]];
+			}
+			while(wl < ql)
+			{
+				ans -= q[w[wl]] * q[w[wl]] , -- q[w[wl]];
+				ans += q[w[wl]] * q[w[wl]] , ++ wl;
+			}
+			while(wr < qr)
+			{
+				++ wr , ans -= q[w[wr]] * q[w[wr]];
+				++ q[w[wr]] , ans += q[w[wr]] * q[w[wr]];
+			}
+			while(wr > qr)
+			{
+				ans -= q[w[wr]] * q[w[wr]] , -- q[w[wr]];
+				ans += q[w[wr]] * q[w[wr]] , -- wr;
+			}
+			tmp[bel] = ans;
+		}
+		for(int i = 1 ; i <= m ; ++ i)
+			printf("%lld\n" , tmp[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
