@@ -1,0 +1,218 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <queue>
+#define int long long
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 4e5 + 5;
+	const int Max_m = 5e5 + 5;
+	
+	int t , n , m , tot , head[Max_n] , tot_tree , logm[Max_n + Max_m];
+	int fa[Max_n + Max_m] , dis[Max_n] , head_tree[Max_n + Max_m] , min_dis[Max_n + Max_m];
+	int fa_tree[Max_n + Max_m][20] , cnt , val[Max_n + Max_m] , dep[Max_n + Max_m];
+	
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_m << 1] , edge_tree[Max_m << 1];
+	
+	inline void add_edge(int x , int y , int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+	
+	struct Node
+	{
+		int from , to , val;
+		Node(int a , int b , int c)
+		{
+			from = a , to = b , val = c;
+		}
+		Node(){}
+	}readin[Max_m];
+	
+	inline bool cmp(Node a , Node b)
+	{
+		return a.val > b.val;
+	}
+	
+	int find(const int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+	
+	inline void merge(const int x , const int y)
+	{
+		fa[find(x)] = find(y);
+	}
+	
+	inline void add_edge_tree(const int x , const int y)
+	{
+		edge_tree[ ++ tot_tree] = node(head_tree[x] , y , 0);
+		head_tree[x] = tot_tree;
+	}
+
+	void dfs_tree(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , fa_tree[now][0] = from;
+		bool wqqka = false;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa_tree[now][i] = fa_tree[fa_tree[now][i - 1]][i - 1];
+		for(int i = head_tree[now] ; i ; i = edge_tree[i].nex)
+		{
+			int nex = edge_tree[i].to;
+			wqqka = true;
+			dfs_tree(nex , now);
+			min_dis[now] = min(min_dis[now] , min_dis[nex]);
+		}
+		if(!wqqka)	min_dis[now] = dis[now];
+	}
+	
+	struct God
+	{
+		int now , val;
+		God(int a , int b)
+		{
+			now = a , val = b;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			return val > a.val;
+		}
+	};
+	
+	priority_queue<God> zzz;
+	
+	bool vis[Max_n + Max_m]; 
+	
+	inline void dijkstra()
+	{
+		dis[1] = 0;
+		zzz.push(God(1 , 0));
+		while(!zzz.empty())
+		{
+			int now = zzz.top().now;zzz.pop();
+			if(vis[now]) continue;
+			vis[now] = true;
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to;
+				if(dis[nex] > dis[now] + edge[i].val)
+				{
+					dis[nex] = dis[now] + edge[i].val;
+					zzz.push(God(nex , dis[nex]));
+				}
+			}
+		}
+	}
+	
+	inline void clear()
+	{
+		memset(head , 0 , sizeof(head)) , tot = 0;
+		memset(dis , 0x3f , sizeof(dis)) , tot_tree = 0;
+		memset(head_tree , 0 , sizeof(head_tree));
+		memset(vis , false , sizeof(vis));
+		memset(min_dis , 0x3f , sizeof(min_dis));
+		memset(fa_tree , 0 , sizeof(fa_tree));
+	}
+	
+	int ans , q , k , s;
+	
+	inline int query(int now , const int lim)
+	{
+		for(int i = logm[dep[now]] ; i >= 0 ; -- i)
+		{
+			int nex = fa_tree[now][i];
+//			if(val[nex] >= lim)	continue; bug
+			if(val[nex] <= lim || !nex)	continue;
+			now = fa_tree[now][i];
+		}
+		return now;
+	}
+	
+	inline void main()
+	{
+		t = read();
+		for(int i = 2 ; i <= 6e5 ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		while(t --)
+		{
+			clear();ans = 0;
+			n = read() , m = read();
+			cnt = n;// bug
+			for(int i = 1 ; i <= n + m ; ++ i)
+				fa[i] = i;
+			for(int i = 1 ; i <= m ; ++ i)
+			{
+				int wi = read() , qi = read() , ni = read() , mi = read();
+				add_edge(wi , qi , ni) , readin[i] = Node(wi , qi , mi);
+			}
+			dijkstra();
+			sort(readin + 1 , readin + m + 1 , cmp);
+			for(int i = 1 ; i <= m ; ++ i)
+			{
+				int wi = readin[i].from , qi = readin[i].to , va = readin[i].val;
+				if(find(wi) == find(qi))	continue;
+				++ cnt , val[cnt] = va;
+				add_edge_tree(cnt , find(wi)) , add_edge_tree(cnt , find(qi));
+//				merge(cnt , wi) , merge(cnt , qi); bug
+				merge(wi , cnt) , merge(qi , cnt);
+			}
+			dfs_tree(cnt , 0);
+			q = read() , k = read() , s = read();
+			while(q --)
+			{
+				int wi = (read() + k * ans - 1) % n + 1 , qi = (read() + k * ans) % (s + 1);
+				ans = min_dis[query(wi , qi)];
+				printf("%lld\n" , ans);
+			}
+		}
+	}
+}
+
+signed main()
+{
+//	freopen("return.in" , "r" , stdin);
+//	freopen("return.out" , "w" , stdout);
+	thecold::main();
+	return 0;
+}
+/*
+3
+1 0
+0 0 1
+1 0
+0 0 1
+1 0
+0 0 1
+*/
