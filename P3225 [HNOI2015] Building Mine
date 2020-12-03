@@ -1,0 +1,142 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2000;
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	int head[Max_n << 1] , n , t , dfn[Max_n] , tim , root;
+	int low[Max_n] , tot , cnt , ge[Max_n] , max_dot , ans;
+	ll ans_cnt , ans_way , grp;
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+		max_dot = max(max_dot , max(x , y));
+	}
+
+	void tarjan(const int now , const int from)
+	{
+		dfn[now] = low[now] = ++ tim;
+		int cnt_son = 0;
+		bool wqqka = false;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+//			++ cnt_son; bug
+			if(dfn[nex]) low[now] = min(low[now] , dfn[nex]);
+			else
+			{
+				tarjan(nex , now);
+				++ cnt_son;
+				low[now] = min(low[now] , low[nex]);
+				if(now != root && low[nex] >= dfn[now])	wqqka = true;
+			}
+		}
+		if(wqqka || (root == now && cnt_son > 1))	ge[now] = true;
+	}
+
+	int vis[Max_n << 1] , sum , siz;
+
+	void dfs(const int now)
+	{
+		vis[now] = grp , ++ siz;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(ge[nex] && vis[nex] != grp)
+				++ sum , vis[nex] = grp;
+			if(vis[nex] != grp)
+				dfs(nex);
+		}
+	}
+	
+	inline void clear()
+	{
+		memset(head , 0 , sizeof(head)) , max_dot = 0;
+		memset(dfn , 0 , sizeof(dfn)) , tim = 0;
+		memset(ge , false , sizeof(ge)) , grp = 0;
+		ans_cnt = 0 , ans_way = 1;
+		memset(vis , 0 , sizeof(vis));
+		tot = 0;// bug
+	}
+	
+	inline void main()
+	{
+		int task = 1;
+		n = read();
+		while(n)
+		{
+			clear();
+			for(int i = 1 ; i <= n ; ++ i)
+				add_edge(read() , read());
+			for(int i = 1 ; i <= max_dot ; ++ i)
+				if(!dfn[i])	root = i , tarjan(i , 0);
+			for(int i = 1 ; i <= max_dot ; ++ i)
+				if(!vis[i] && !ge[i])
+				{
+					++ grp , siz = 0;
+					sum = 0; dfs(i);
+					if(sum == 0)
+					{
+						ans_way *= siz * (siz - 1) / 2;
+						ans_cnt += 2;
+					}
+					if(sum == 1)
+						ans_way *= siz , ++ ans_cnt;
+				}
+			printf("Case %d: %lld %lld\n" , task ++ , ans_cnt , ans_way);
+			n = read();
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+5
+2 4
+5 3
+2 1
+5 2
+3 2
+0
+*/
