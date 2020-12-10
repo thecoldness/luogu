@@ -1,0 +1,160 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 4e4 + 5;
+	
+	
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	int head[Max_n] , tot , n , k , bit[Max_n] , dis[Max_n];
+	int root , siz[Max_n] , mx[Max_n] , st[Max_n * 15] , tp;
+	int tmp[Max_n] , top;
+	
+	ll ans;
+	
+	bool vis[Max_n];
+	
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void add(const int pos , const int val)
+	{
+		for(int i = pos ; i <= k ; i += lowbit(i))
+			bit[i] += val;
+	}
+	
+	inline int query(const int pos)
+	{
+		int ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += bit[i];
+		return ret;
+	}
+	
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+	
+	void dfs_root(const int now , const int from , const int all)
+	{
+		siz[now] = 1 , mx[now] = 0;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || vis[nex])	continue;
+			dfs_root(nex , now , all);
+			siz[now] += siz[nex];
+			mx[now] = max(mx[now] , siz[nex]);
+		}
+		mx[now] = max(mx[now] , all - siz[now]);
+		if(mx[root] > mx[now])	root = now;
+	}
+	
+	inline void recover()
+	{
+		while(tp)
+			add(st[tp] , -1) , -- tp;
+	}
+	
+	void dfs_dis(const int now , const int from)
+	{
+		tmp[ ++ top] = dis[now];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || vis[nex])	continue;
+			dis[nex] = dis[now] + edge[i].val;
+			dfs_dis(nex , now);
+		}
+	}
+
+	inline void calc(const int now)// regradless 0
+	{
+		recover();
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			top = 0;
+			int nex = edge[i].to;
+			if(vis[nex])	continue;
+			dis[nex] = edge[i].val;
+			dfs_dis(nex , now);
+			for(int j = 1 ; j <= top ; ++ j)
+				if(tmp[j] <= k) ans += query(k - tmp[j]);
+			for(int j = 1 ; j <= top ; ++ j)
+				if(tmp[j] <= k)	add(tmp[j] , 1) , st[ ++ tp] = tmp[j];
+		}
+		ans += query(k);
+	}
+	
+	inline void solve(const int now)
+	{
+		calc(now);
+		vis[now] = true;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(vis[nex])	continue;
+			root = 0;
+			dfs_root(nex , now , siz[nex]);
+			solve(root);
+		}
+	}
+	
+	inline void main()
+	{
+		mx[0] = n = read();
+		for(int i = 1 ; i < n ; ++ i)
+		{
+			int ui = read() , vi = read() , qi = read();
+			add_edge(ui , vi , qi);
+		}
+		k = read();
+		dfs_root(1 , 0 , n);
+		solve(root);
+		printf("%lld" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
