@@ -1,0 +1,104 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	const int Max_n = 1e6 + 5;
+	const double pi = acos(-1.0);
+	
+	char ai[Max_n] , bi[Max_n];
+	
+	struct complex
+	{
+		double s , x;
+		complex(double a , double b)
+		{
+			s = a , x = b;
+		}
+		complex(){}
+	}a[Max_n << 4] , b[Max_n << 4];
+	
+	int n , m , lim , len;
+	
+	complex operator + (complex a , complex b)
+	{
+		return complex(a.s + b.s , a.x + b.x);
+	}
+	
+	complex operator - (complex a , complex b)
+	{
+		return complex(a.s - b.s , a.x - b.x);
+	}
+	
+	complex operator * (complex a , complex b)
+	{
+//		return complex(a.s * b.s - a.x * b.x , a.s * b.x + a.x * b.x); bug
+		return complex(a.s * b.s - a.x * b.x , a.s * b.x + a.x * b.s);
+	}
+	
+	int rev[Max_n << 2];
+	
+	ll ans[Max_n << 2];
+	
+	inline void FFT(complex *w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i)
+			if(rev[i] > i)	swap(w[i] , w[rev[i]]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			complex base = complex(cos(2.0 * pi / (1 << dep)) , opt * sin(2.0 * pi / (1 << dep)));
+			for(int i = 0 ; i < len ; i += (1 << dep))
+			{
+				complex q = complex(1 , 0);
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					complex ui = w[i + j] , ti = q * w[i + j + (1 << (dep - 1))];
+					w[i + j] = ui + ti , w[i + j + (1 << (dep - 1))] = ui - ti;
+					q = q * base;
+				}
+			}
+		}
+		if(opt == -1)
+			for(int i = 0 ; i < len ; ++ i)
+				w[i].s /= len;
+	}
+	
+	inline void main()
+	{
+		scanf("%s" , ai) , scanf("%s" , bi);
+		n = strlen(ai) , m = strlen(bi);
+		lim = 0 , len = 1;
+		while(len <= n + m)	len <<= 1 , ++ lim;
+		for(int i = 1 ; i <= len ; ++ i)
+			rev[i] = (rev[i / 2] >> 1) | ((i & 1) << (lim - 1));
+		for(int i = 0 ; i < n ; ++ i)
+			a[n - i - 1] = complex(ai[i] - '0' , 0);
+		for(int i = 0 ; i < m ; ++ i)
+			b[m - i - 1] = complex(bi[i] - '0' , 0);
+		FFT(a , 1) , FFT(b , 1);
+		for(int i = 0 ; i <= len ; ++ i)
+			a[i] = a[i] * b[i];
+		FFT(a , -1);
+		for(int i = 0 ; i <= len + 1 ; ++ i)
+			ans[i] = (int)(a[i].s + 0.5);
+		for(int i = 0 ; i <= len + 1 ; ++ i)
+			ans[i + 1] += ans[i] / 10 , ans[i] %= 10;
+		int top = len + 2;
+		while(ans[top] == 0 && top)
+			-- top;
+		for(int i = top ; i >= 0 ; -- i)
+			printf("%lld" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
