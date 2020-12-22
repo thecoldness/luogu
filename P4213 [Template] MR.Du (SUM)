@@ -1,0 +1,118 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int base = 3e6 + 5;
+	
+	int t , n , prime[base] , tot , st_mu[base] , tot_mu , st_phi[base] , tot_phi;
+	
+	ll phi[base] , mu[base];
+	
+	inline void pre_work()
+	{
+		for(int i = 2 ; i <= base - 5 ; ++ i)
+		{
+			if(!phi[i])	phi[i] = i - 1 , mu[i] = -1 , prime[ ++ tot] = i;
+			for(int j = 1 ; j <= tot && (ll) prime[j] * i <= base - 5 ; ++ j)
+			{
+				if(i % prime[j] == 0)
+				{
+					mu[i * prime[j]] = 0 , phi[i * prime[j]] = phi[i] * prime[j];
+					break;
+				}
+				mu[i * prime[j]] = - mu[i] , phi[i * prime[j]] = phi[i] * phi[prime[j]];
+			}
+		}
+		phi[1] = mu[1] = 1;
+		for(int i = 1 ; i <= base - 5 ; ++ i)
+			phi[i] += phi[i - 1] , mu[i] += mu[i - 1];
+	}
+	
+	ll get_mu[base] , get_phi[base];
+	
+	bool vis_mu[base] , vis_phi[base];
+	
+	ll sum_phi(const int x)
+	{
+//		if(x <= base)	return phi[x]; bug
+		if(x <= base - 5)	return phi[x];
+		if(vis_phi[n / x])	return get_phi[n / x];
+		vis_phi[n / x] = true , st_phi[ ++ tot_phi] = n / x;
+//		ll ret = 1ll * x * x + x , r; bug
+		ll ret = (1ll * x * x + x) / 2;
+		int r = 0;
+		for(int l = 2 ; r < x ; l = r + 1)
+		{
+			r = x / (x / l);
+			ret -= sum_phi(x / l) * (r - l + 1);
+		}
+		return get_phi[n / x] = ret;
+	}
+	
+	ll sum_mu(const int x)
+	{
+//		if(x <= base)	return mu[x]; bug
+		if(x <= base - 5)	return mu[x];
+		if(vis_mu[n / x])	return get_mu[n / x];
+		vis_mu[n / x] = true , st_mu[ ++ tot_mu] = n / x;
+		ll ret = 1;
+		int r = 0;
+		for(ll l = 2 ; r < x ; l = r + 1)
+		{
+			r = x / (x / l);
+//			ret -= 1ll * (r - l + 1) * sum_mu(n / l); bug
+			ret -= sum_mu(x / l) * (r - l + 1);
+		}
+		return get_mu[n / x] = ret;
+	}
+	
+	inline void clear()
+	{
+		while(tot_mu)	vis_mu[st_mu[tot_mu]] = false , -- tot_mu;
+		while(tot_phi)	vis_phi[st_phi[tot_phi]] = false , -- tot_phi;
+	}
+	
+	inline void main()
+	{
+		pre_work();
+		t = read();
+		while(t --)
+		{
+			n = read();
+//			memset(vis_mu , 0 , sizeof(vis_mu)) , memset(vis_phi , 0 , sizeof(vis_phi));
+			clear();
+			printf("%lld %lld\n" , sum_phi(n) , sum_mu(n));
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
