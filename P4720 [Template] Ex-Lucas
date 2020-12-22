@@ -1,0 +1,146 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_p = 30;
+	const int Max_n = 1e6 + 5;
+	
+	ll n , m , p , jc[Max_n];
+	
+	int a[Max_p] , w[Max_p] , ans , prime[Max_n];
+	int mindiv[Max_n] , tot , top , M[Max_p];
+	
+	int gcd(int a , int b)
+	{
+		return b ? a : gcd(b , a % b);
+	}
+	
+	ll calc_cnt(const ll len , const int p)
+	{
+		if(len < p)	return 0;
+		return len / p + calc_cnt(len / p , p);
+	}
+	
+	inline void pre_work()
+	{
+		jc[0] = 1;
+		for(int i = 2 ; i <= 1e6 ; ++ i)
+		{
+			if(!mindiv[i])	prime[ ++ tot] = i , mindiv[i] = i;
+			for(int j = 1 ; j <= tot && (ll) i * prime[j] <= 1e6 ; ++ j)
+			{
+				mindiv[i * prime[j]] = prime[j];
+				if(i % prime[j] == 0)	break;
+			}
+		}
+	}
+	
+//	inline int quickpow(int x , ll y , int jzp) bug
+	inline ll quickpow(ll x , ll y , ll jzp)
+	{
+		assert(jzp >= 0);
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)	ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline ll calc_val(const ll len , const int mod , const int jzp)
+	{
+//		if(len < jzp)	return jc[len]; bug
+		if(len < mod)	return jc[len];
+//		ll ret = 1ll * quickpow(jc[jzp - 1] , mod , len / jzp) * jc[len % jzp] % jzp; bug
+		ll ret = 1ll * quickpow(jc[jzp - 1] , len / jzp , jzp) * jc[len % jzp] % jzp;
+		ret = ret * calc_val(len / mod , mod , jzp) % jzp;
+		return ret;
+	}
+	
+	ll x , y;
+	
+	void exgcd(ll a , ll b)// ax+ by = gcd(a , b)
+	{
+		if(b == 0)	{x = 1 , y = 0; return;}
+		exgcd(b , a % b);
+		ll tmpx = x , tmpy = y;
+		x = tmpy , y = tmpx - a / b * tmpy;
+	}
+	
+	void solve(int mod , const int num)
+	{
+		if(mod == 1) {top = num - 1; return;}
+		int base = mindiv[mod] , k = 0 , all;
+		while(mod % base == 0)	++ k , mod /= base;
+		w[num] = all = quickpow(base , k , p + 5);
+		for(int i = 1 ; i < all ; ++ i)
+			if(i % base == 0)	jc[i] = jc[i - 1];
+			else jc[i] = jc[i - 1] * i % all;
+		ll index = calc_cnt(n , base) - calc_cnt(m , base) - calc_cnt(n - m , base);
+		a[num] = calc_val(n , base , all);
+		exgcd(calc_val(m , base , all) , all);
+		x = (x % all + all) % all;
+		a[num] = 1ll * a[num] * x % all;
+		exgcd(calc_val(n - m , base , all) , all);
+		x = (x % all + all) % all;
+		a[num] = 1ll * a[num] * x % all;
+		a[num] = 1ll * a[num] * quickpow(base , index , all) % all;
+		solve(mod , num + 1);
+	}
+	
+	inline ll add(const ll x , const ll y , const ll jzp)
+	{
+		return (x + y) % jzp;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , p = read();
+		pre_work();
+		solve(p , 1);
+		for(int i = 1 ; i <= top ; ++ i)
+		{
+			exgcd(p / w[i] , w[i]);
+			x = add(x % w[i] , w[i] , w[i]);
+			ans = add(ans , (1ll * a[i] * (p / w[i]) % p) * x % p , p);
+		}
+		printf("%lld" , (ans + p) % p);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+10 7 9
+ans = 3
+*/
