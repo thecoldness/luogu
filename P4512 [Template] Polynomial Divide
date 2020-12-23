@@ -1,0 +1,147 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 4e5 + 5;
+	const int jzp = 998244353;
+	const int G = 3;
+	
+	ll f[Max_n] , g[Max_n] , q[Max_n] , r[Max_n] , ni[Max_n];
+	
+	int rev[Max_n] , lim , len , n , m;
+	
+	inline void prepare(const int lenth)
+	{
+		len = 1 , lim = 0;
+		while(len <= lenth)	++ lim , len <<= 1;
+		for(int i = 1 ; i < len ; ++ i)
+			rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (lim - 1));
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)	ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)	ret -= jzp;
+		return ret;
+	}
+	
+	inline void NTT(ll *w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i)
+			if(rev[i] > i)	swap(w[i] , w[rev[i]]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			int base = quickpow(opt == 1 ? 3 : (jzp + 1) / 3 , (jzp - 1) / (1 << dep));
+			for(int i = 0 ; i < len ; i += 1 << dep)
+			{
+				ll q = 1;
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					int ui = w[i + j] , ti = q * w[i + j + (1 << (dep - 1))] % jzp;
+					w[i + j] = add(ui , ti) , w[i + j + (1 << (dep - 1))] = add(ui , jzp - ti);
+					q = q * base % jzp;
+				}
+			}
+		}
+		if(opt == -1)
+		{
+			int inv = quickpow(len , jzp - 2);
+			for(int i = 0 ; i < len ; ++ i)
+				w[i] = w[i] * inv % jzp;
+		}
+	}
+	
+	ll tmpf[Max_n] , tmpg[Max_n] , cof[Max_n] , cog[Max_n];
+	
+	void solve_ni(const int mod , ll *w , ll *q)
+	{
+		if(mod == 1)	{q[0] = quickpow(w[0] , jzp - 2); return;}
+		int mid = (mod + 1) >> 1;
+		solve_ni(mid , w , q);
+		for(int i = 0 ; i < mod ; ++ i)
+			tmpg[i] = q[i] , tmpf[i] = w[i];
+		prepare(mod * 2 - 1);
+		NTT(tmpg , 1) , NTT(tmpf , 1);
+		for(int i = 0 ; i < len ; ++ i)
+			tmpf[i] = tmpg[i] * add(2 , jzp - (tmpf[i] * tmpg[i] % jzp)) % jzp;
+		NTT(tmpf , -1);
+		for(int i = 0 ; i < mod ; ++ i)
+			q[i] = tmpf[i];
+		for(int i = 0 ; i < len ; ++ i)
+			tmpf[i] = tmpg[i] = 0;
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 0 ; i <= n ; ++ i)
+			cof[i] = f[i] = read();
+		for(int i = 0 ; i <= m ; ++ i)
+			cog[i] = g[i] = read();
+		reverse(f , f + n + 1) , reverse(g , g + m + 1);
+		solve_ni(n - m + 1 , g , ni);
+		prepare(n * 2 - m + 1);
+		NTT(f , 1) , NTT(ni , 1);
+		for(int i = 0 ; i < len ; ++ i)
+			q[i] = f[i] * ni[i] % jzp;
+		NTT(q , -1);
+//		for(int i = n - m ; i < len ; ++ i)	 bug
+		for(int i = n - m + 1 ; i < len ; ++ i)
+			q[i] = 0;
+		reverse(q , q + n - m + 1);
+		for(int i = 0 ; i <= n - m ; ++ i)
+			printf("%lld " , q[i]);
+		puts("");
+//		reverse(q , q + n - m); bug
+		prepare(n + 1);
+		NTT(cog , 1) , NTT(q , 1);
+		for(int i = 0 ; i < len ; ++ i)
+			cog[i] = cog[i] * q[i] % jzp;
+		NTT(cog , -1);
+		for(int i = 0 ; i < m ; ++ i)
+//			printf("%d " , add(cof[i] , jzp - q[i])); bug
+			printf("%d " , add(cof[i] , jzp - cog[i]));
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
