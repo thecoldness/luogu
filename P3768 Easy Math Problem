@@ -1,0 +1,116 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cmath>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	const int Max_n = 5e6 + 5;
+	
+	ll jzp , n , inv6 , base , sum[Max_n];
+	
+	map<ll , ll> mp;
+	
+	inline ll quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)	ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	int prime[Max_n] , tot , phi[Max_n];
+
+	inline ll add(const ll x , const ll y)
+	{
+		ll ret = x + y;
+		if(ret >= jzp)	ret -= jzp;
+		return ret;
+	}
+
+	inline ll get_sum_2(const ll x)
+	{
+		return x * add(x , 1) % jzp * add(1 , 2ll * x % jzp) % jzp * inv6 % jzp;
+	}
+	
+	inline ll get_sum_3(const ll x)
+	{
+		ll tmp = (x * (x + 1) / 2) % jzp;
+		return tmp * tmp % jzp;
+	}
+
+	inline void pre_work()
+	{
+		for(int i = 2 ; i <= base ; ++ i)
+		{
+			if(!phi[i]) phi[i] = i - 1 , prime[ ++ tot] = i;
+			for(int j = 1 ; j <= tot && (ll) prime[j] * i <= base ; ++ j)
+			{
+				if(i % prime[j] == 0)
+//				{	phi[i * prime[j]] = phi[i] * prime[j]; return; } bug
+				{	phi[i * prime[j]] = phi[i] * prime[j]; break;}
+				phi[i * prime[j]] = phi[i] * phi[prime[j]];
+			}
+		}
+		phi[1] = 1;
+		for(int i = 1 ; i <= base ; ++ i)
+			sum[i] = 1ll * phi[i] * i % jzp * i % jzp;
+		for(int i = 2 ; i <= base ; ++ i)
+			sum[i] = add(sum[i] , sum[i - 1]);
+	}
+
+	ll get_sum(const ll x)
+	{
+		if(x <= base)	return sum[x];
+//		if(mp[x / base]) return mp[x / base]; bug
+		if(mp.find(x) != mp.end()) return mp[x];
+		ll ret = get_sum_3(x % jzp) , l , r;
+		for(l = 2 ; l <= x ; l = r + 1)
+		{
+			r = x / (x / l);
+			ret = add(ret , jzp - (add(get_sum_2(r % jzp) , jzp - get_sum_2((l - 1) % jzp)) * get_sum(x / l) % jzp));
+		}
+//		return ret; bug
+		return mp[x] = ret;
+	}
+
+	inline ll get_ans(const ll x)
+	{
+		ll l , r , ret = 0;
+		for(l = 1 ; l <= x ; l = r + 1)
+		{
+			r = x / (x / l);
+//			ll tmp = get_sum_3((x / l) % jzp) * add(get_sum(l - 1) , jzp - get_sum(r)) % jzp; bug
+			ll tmp = get_sum_3((x / l) % jzp) * add(get_sum(r) , jzp - get_sum(l - 1)) % jzp;
+			ret = add(ret , tmp);
+		}
+		return ret;
+	}
+	
+	inline void main()
+	{
+//		freopen("data.in" , "r" , stdin);
+		scanf("%lld %lld" , &jzp , &n);
+		inv6 = quickpow(6 , jzp - 2);
+		base = pow(n , 2.0 / 3);
+		pre_work();
+		printf("%lld" , get_ans(n));
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+998244353 3
+*/
