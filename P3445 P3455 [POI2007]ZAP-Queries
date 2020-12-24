@@ -1,0 +1,85 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e4 + 5;
+	
+	int mu[Max_n] , t , n , m , prime[Max_n] , tot , k;
+	
+	bool vis[Max_n];
+	
+	inline void prepare()
+	{
+		mu[1] = 1;
+		for(int i = 2 ; i <= 5e4 ; ++ i)
+		{
+			if(!vis[i])	mu[i] = -1 , prime[ ++ tot] = i;
+			for(int j = 1 ; j <= tot && (ll) prime[j] * i <= 5e4 ; ++ j)
+			{
+				vis[i * prime[j]] = true;
+				if(i % prime[j] == 0)
+				{ mu[i * prime[j]] = 0;break;}
+				mu[i * prime[j]] = - mu[i];
+			}
+		}
+		for(int i = 1 ; i <= 5e4 ; ++ i)
+			mu[i] += mu[i - 1];
+	}
+	
+	inline void main()
+	{
+		prepare();
+		t = read();
+		while(t --)
+		{
+			n = read() , m = read() , k = read();
+			if(n > m)	swap(n , m); ll ans = 0;
+			int l , r , lenn = n / k , lenm = m / k;
+			for(l = 1 ; l <= lenn ; l = r + 1)
+			{
+				r = min(lenn / (lenn / l) , lenm / (lenm / l));
+//				ll tmp = (mu[r] - mu[l]) * (lenn / l) * (lenm / l); bug
+//				ll tmp = (mu[r] - mu[l - 1]) * (lenn / l) * (lenm / l); bug
+				ll tmp = 1ll * (mu[r] - mu[l - 1]) * (lenn / l) * (lenm / l);
+				ans += tmp;
+			}
+			printf("%lld\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+
+/*
+1
+1 1 1
+*/
