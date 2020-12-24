@@ -1,0 +1,237 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <climits>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e4 + 5;
+	const int Max_dot = 3e7 + 5;
+	
+	int son[Max_dot][2] , fa[Max_dot] , siz[Max_dot] , val[Max_dot];
+	int a[Max_n] , cnt[Max_dot] , tot , n , m;
+	
+	struct node
+	{
+		int l , r , root;
+		node(int a , int b)
+		{
+//			l = a , r = b; bug
+			l = a , r = b , root = 0;
+		}
+		node(){}
+	}tree[Max_n << 2];
+	
+	inline void push_up(const int x)
+	{
+		siz[x] = siz[son[x][0]] + siz[son[x][1]] + cnt[x];
+	}
+	
+	inline void rotate(const int x)
+	{
+		int fx = fa[x] , ffx = fa[fx];
+		if(ffx) son[ffx][fx == son[ffx][1]] = x;
+		bool type = (x == son[fx][1]);
+//		son[x][!type] = fx , son[fx][type] = son[x][!type]; bug
+//		fa[x] = ffx , fa[fx] = x , fa[son[x][type]] = fx; bug
+		fa[x] = ffx , fa[fx] = x , fa[son[x][!type]] = fx;
+		son[fx][type] = son[x][!type] , son[x][!type] = fx;
+		push_up(fx) , push_up(x);
+	}
+	
+	inline void splay(const int x , const int goal , int &root)
+	{
+		while(fa[x] != goal)
+		{
+			int fx = fa[x] , ffx = fa[fx];
+			if(ffx != goal)
+			{
+				bool type1 = son[fx][1] == x , type2 = son[ffx][1] == fx;
+				if(type1 == type2)	rotate(fx);
+				else rotate(x);
+			}
+			rotate(x);
+		}
+		if(goal == 0)	root = x;
+	}
+	
+	int insert(int &now , const int va , const int tim , const int from)
+	{
+//		if(!now)	val[ ++ now] = va; bug
+//		if(!now) val[ ++ tot] = va,  fa[tot] = from; bug
+		if(!now) val[now = ++ tot] = va , fa[tot] = from; 
+		if(val[now] == va) {cnt[now] += tim; return now;}
+		if(val[now] > va)	return insert(son[now][0] , va , tim , now);
+		return insert(son[now][1] , va , tim , now);
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		splay(insert(tree[tr].root , -INT_MAX , 1 , 0) , 0 , tree[tr].root);
+		splay(insert(tree[tr].root , INT_MAX , 1 , 0) , 0 , tree[tr].root);
+		for(int i = l ; i <= r ; ++ i)
+			splay(insert(tree[tr].root , a[i] , 1 , 0) , 0 , tree[tr].root);
+		if(l == r)	return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+	}
+	
+	int find_rnk(const int now , const int va)
+	{
+		if(!now)	return 0;
+		if(val[now] == va)	return siz[son[now][0]];
+		if(val[now] > va)	return find_rnk(son[now][0] , va);
+		else return siz[son[now][0]] + cnt[now] + find_rnk(son[now][1] , va);
+	}
+	
+	int find_kth(const int now , const int kth)
+	{
+		if(siz[son[now][0]] < kth && siz[son[now][0]] + cnt[now] >= kth)	return val[now];
+		if(siz[son[now][0]] >= kth)	return find_kth(son[now][0] , kth);
+		return find_kth(son[now][1] , kth - siz[son[now][0]] - cnt[now]);
+	}
+	
+	int query_rnk(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return 0;
+		if(l <= ll && rr <= r)
+		{
+			splay(insert(tree[tr].root , val , 1 , 0) , 0 , tree[tr].root);
+			int ret = find_rnk(tree[tr].root , val) - 1;
+			splay(insert(tree[tr].root , val , -1 , 0) , 0 , tree[tr].root);
+			return ret;
+		}
+		return query_rnk(l , r , tr * 2 , val) + query_rnk(l , r , tr * 2 + 1 , val);
+	}
+	
+	void change(const int pos , const int tr , const int val , const int tim)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		splay(insert(tree[tr].root , val , tim , 0) , 0 , tree[tr].root);
+		if(ll == rr)	return;
+		int mid = (ll + rr) >> 1;
+		if(mid >= pos)	change(pos , tr * 2 , val , tim);
+		else change(pos , tr * 2 + 1 , val , tim);
+	}
+	
+	int query_pre(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return - INT_MAX;
+		if(l <= ll && rr <= r)
+		{
+			splay(insert(tree[tr].root , val , 1 , 0) , 0 , tree[tr].root);
+			int rnk = find_rnk(tree[tr].root , val) , ret = find_kth(tree[tr].root , rnk);
+//			assert(rnk);
+			splay(insert(tree[tr].root , val , -1 , 0) , 0 , tree[tr].root);
+			return ret;
+		}
+		return max(query_pre(l , r , tr * 2 , val) , query_pre(l , r , tr * 2 + 1 , val));
+	}
+	
+	int find_rnk_aft(const int now , const int va)
+	{
+		if(!now)	return 0;
+		if(val[now] == va)	return siz[son[now][0]] + cnt[now] + 1;
+		if(val[now] > va)	return find_rnk(son[now][0] , va);
+		else return siz[son[now][0]] + cnt[now] + find_rnk(son[now][1] , va);
+	}
+	
+	int query_aft(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return INT_MAX;
+		if(l <= ll && rr <= r)
+		{
+			splay(insert(tree[tr].root , val , 1 , 0) , 0 , tree[tr].root);
+			int rnk = find_rnk_aft(tree[tr].root , val) , ret = find_kth(tree[tr].root , rnk);
+			splay(insert(tree[tr].root , val , -1 , 0) , 0 , tree[tr].root);
+			return ret;
+		}
+		return min(query_aft(l , r , tr * 2 , val) , query_aft(l , r , tr * 2 + 1 , val));
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		build(1 , n , 1);
+		while(m --)
+		{
+			int opt = read();
+			if(opt == 1)
+			{
+				int l = read() , r = read() , k = read();
+				printf("%d\n" , query_rnk(l , r , 1 , k) + 1);
+			}
+			else if(opt == 2)
+			{
+				int l = read() , r = read() , k = read() , ql = 0 , qr = 1e8 , ans;
+				while(ql <= qr)
+				{
+					int mid = (ql + qr) >> 1;
+//					int rnk = query_rnk(l , r , 1 , mid); bug
+					int rnk = query_rnk(l , r , 1 , mid) + 1;
+					if(rnk <= k)
+						ans = mid , ql = mid + 1;
+					else qr = mid - 1;
+				}
+				printf("%d\n" , ans);
+			}
+			else if(opt == 3)
+			{
+				int pos = read() , k = read();
+				change(pos , 1 , a[pos] , -1) , change(pos , 1 , k , 1);
+				a[pos] = k;
+			}
+			else if(opt == 4)
+			{
+				int l = read() , r = read() , k = read();
+				printf("%d\n" , query_pre(l , r , 1 , k));
+			}
+			else
+			{
+				int l = read() , r = read() , k = read();
+				printf("%d\n" , query_aft(l , r , 1 , k));
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+4 3
+4 2 2 1
+2 1 4 3
+3 4 10
+2 1 4 3
+*/
