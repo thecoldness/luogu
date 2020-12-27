@@ -1,0 +1,195 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <set>
+#include <map>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	
+	set<pair<ll , int> > s;
+	
+	struct node
+	{
+		ll opt , li , ri;
+		node(const int a , const ll b , const ll c)
+		{
+			opt = a , li = b , ri = c;
+		}
+		node(){}
+	}op[Max_n];
+	
+	map<ll , int> mp;
+	
+	struct seg
+	{
+		ll li , ri;
+		seg(const ll a , const ll b)
+		{
+			li = a , ri = b;
+		}
+		seg(){}
+	}segment[Max_n << 2];
+	
+	int n , tot;
+	
+	ll lst;
+	
+	struct Node
+	{
+		int l , r , sum , tag , rev;// 2 is empty
+		Node(int a , int b)
+		{
+			l = a , r = b , sum = rev = 0 , tag = 2;
+		}
+		Node(){}
+	}tree[Max_n << 4];
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag != 2)
+		{
+			tree[tr * 2].sum = (tree[tr * 2].r - tree[tr * 2].l + 1) * tree[tr].tag;
+			tree[tr * 2 + 1].sum = (tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1) * tree[tr].tag;
+			tree[tr * 2].tag = tree[tr * 2 + 1].tag = tree[tr].tag , tree[tr].tag = 2;
+			tree[tr * 2].rev = tree[tr * 2 + 1].rev = 0;// bug
+		}
+		if(tree[tr].rev)
+		{
+			tree[tr * 2].sum = (tree[tr * 2].r - tree[tr * 2].l + 1) - tree[tr * 2].sum;
+			tree[tr * 2 + 1].sum = (tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1) - tree[tr * 2 + 1].sum;
+			tree[tr * 2].rev ^= 1 , tree[tr * 2 + 1].rev ^= 1 , tree[tr].rev = 0;
+		}
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = Node(l , r);
+		if(l == r)
+		{
+			mp[segment[l].li] = l , mp[segment[l].ri] = l;
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+	}
+	
+	inline void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+//		if(l > rr || rr < l)	return; bug
+		if(l > rr || r < ll) return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].sum = (tree[tr].r - tree[tr].l + 1) * val , tree[tr].tag = val;
+			tree[tr].rev = 0; return;
+		}
+		push_down(tr);
+		change(l , r , tr * 2 , val) , change(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+	
+	inline void rever(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(l > rr || r < ll)	return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].sum = (tree[tr].r - tree[tr].l + 1) - tree[tr].sum;
+			tree[tr].rev ^= 1; return;
+		}
+		push_down(tr);
+		rever(l , r , tr * 2) , rever(l , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	inline ll query(const int tr)
+	{
+//		int ll = tree[tr].l , rr = tree[tr].l; bug
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll == rr)	return segment[ll].li;
+		push_down(tr);
+		if(tree[tr * 2].sum < tree[tr * 2].r - tree[tr * 2].l + 1)
+			return query(tr * 2);
+		return query(tr * 2 + 1);
+	}
+	
+	inline void main()
+	{
+		n = read();
+		s.insert(make_pair(1 , 0)) , s.insert(make_pair((ll)1e18 + 1 , 1));
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			ll ui = read() , vi = read() , ti = read();
+			op[i] = node(ui , vi , ti);
+//			s.insert(make_pair(ui , 0)) , s.insert(make_pair(vi , 1));bug
+			s.insert(make_pair(vi , 0)) , s.insert(make_pair(ti , 1)); 
+		}
+		set<pair<ll , int> >::iterator it = s.begin();
+		lst = (*it).first , ++ it;
+		while(it != s.end())
+		{
+			ll now = (*it).first , type = (*it).second;
+			if(type == 1)
+				segment[ ++ tot] = seg(lst , now) , lst = now + 1;
+//			else segment[ ++ tot] = seg(lst , now - 1) , lst = now; bug
+			else if(lst != now) segment[ ++ tot] = seg(lst , now - 1) , lst = now;
+			++ it;
+		}
+		build(1 , tot , 1);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int opt = op[i].opt , tmpl = mp[op[i].li] , tmpr = mp[op[i].ri];
+			if(opt == 1)
+				change(tmpl , tmpr , 1 , 1);
+			if(opt == 2)
+				change(tmpl , tmpr , 1 , 0);
+			if(opt == 3)
+				rever(tmpl , tmpr , 1);
+			printf("%lld\n" , query(1));
+		}
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+5
+3 2 7
+3 5 10
+1 2 7
+2 10 10
+1 2 4
+ans = 1 1 1 1 1
+*/
