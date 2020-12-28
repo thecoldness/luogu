@@ -1,0 +1,72 @@
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	const int Max_n = 2e5 + 5;
+	
+	char c[Max_n];
+	
+	int siz , n , sa[Max_n] , buk[Max_n] , rnk[Max_n] , tmp[Max_n];
+	
+	inline int check(const int x)
+	{
+		return x > n ? x - n : x;
+	}
+	
+	inline void main()
+	{
+		scanf("%s" , c + 1);
+		n = strlen(c + 1);
+		for(int i = 1 ; i <= n ; ++ i)
+			siz = max(siz , (int)c[i]);
+		int *rk = rnk , *tp = tmp;
+		for(int i = 1 ; i <= n ; ++ i)
+			rk[i] = c[i] , tp[i] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+			++ buk[rk[tp[i]]];
+//		for(int i = 1 ; i <= siz ; ++ i) bug
+		for(int i = 1 ; i <= max(n , siz) ; ++ i)
+			buk[i] += buk[i - 1]; // bug
+		for(int i = n ; i ; -- i)
+//			rk[tp[i]] = buk[tp[i]] --; bug
+			sa[buk[rk[tp[i]]] -- ] = tp[i];
+		for(int len = 1 ; len < n ; len <<= 1)
+		{
+//			for(int i = 0 ; i <= siz ; ++ i)bug
+			for(int i = 0 ; i <= n ; ++ i) 
+				buk[i] = 0;
+			for(int i = 1 ; i <= n ; ++ i)
+				tp[i] = sa[i] > len ? sa[i] - len : sa[i] - len + n;
+			for(int i = 1 ; i <= n ; ++ i)
+				++ buk[rk[i]];
+//			for(int i = 1 ; i <= siz ; ++ i) bug
+			for(int i = 1 ; i <= n ; ++ i)
+				buk[i] += buk[i - 1]; // bug
+			for(int i = n ; i ; -- i)
+			{
+				sa[buk[rk[tp[i]]] --] = tp[i];
+				assert(buk[rk[tp[i]]] >= 0);
+			}
+			swap(rk , tp);
+//			rk[sa[1]] = 1; int top = 0; bug
+			rk[sa[1]] = 1; int top = 1;
+			for(int i = 2 ; i <= n ; ++ i)
+				rk[sa[i]] = (tp[sa[i]] == tp[sa[i - 1]] && tp[check(sa[i] + len)] == tp[check(sa[i - 1] + len)]) ? top : ++ top;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			printf("%c" , c[sa[i] - 1 ? sa[i] - 1 : n]);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+*/
