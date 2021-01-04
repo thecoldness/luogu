@@ -1,0 +1,188 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <vector>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	
+	struct node
+	{
+		int xi , yi , mxx , mnx , mxy , mny;
+		node(int a , int b)
+		{
+			mxx = mnx = xi = a , mxy = mny = yi = b;
+		}
+		node(){}
+	}tree[Max_n];
+	
+	int n , k , son[Max_n][2] , tot , root;
+	
+	struct Node
+	{
+		int xi , yi;
+		Node(int a , int b)
+		{
+			xi = a , yi = b;
+		}
+		Node(){}
+	}a[Max_n];
+	
+	inline bool cmpx(Node a , Node b)
+	{
+		return a.xi < b.xi;
+	}
+	
+	inline bool cmpy(Node a , Node b)
+	{
+		return a.yi < b.yi;
+	}
+	
+	inline void push_up(const int tr)
+	{
+		if(son[tr][0])
+		{
+			tree[tr].mxx = max(tree[son[tr][0]].mxx , tree[tr].mxx);
+			tree[tr].mnx = min(tree[son[tr][0]].mnx , tree[tr].mnx);
+			tree[tr].mxy = max(tree[son[tr][0]].mxy , tree[tr].mxy);
+			tree[tr].mny = min(tree[son[tr][0]].mny , tree[tr].mny);
+		}
+		if(son[tr][1])
+		{
+			tree[tr].mxx = max(tree[tr].mxx , tree[son[tr][1]].mxx);
+			tree[tr].mnx = min(tree[tr].mnx , tree[son[tr][1]].mnx);
+			tree[tr].mxy = max(tree[tr].mxy , tree[son[tr][1]].mxy);
+			tree[tr].mny = min(tree[tr].mny , tree[son[tr][1]].mny);
+		}
+	}
+	
+	inline ll pw(const ll x)
+	{
+		return x * x;
+	}
+	
+	void build(int &tr , const int l , const int r)
+	{
+		if(l > r)	return;
+		tr = ++ tot;
+		if(l == r)
+		{
+			tree[tr] = node(a[l].xi , a[l].yi); return;
+		}
+		ll sumx = 0 , sumy = 0 , tmpx = 0 , tmpy = 0;
+		for(int i = l ; i <= r ; ++ i)
+			sumx += a[i].xi , sumy += a[i].yi;
+		sumx /= (r - l + 1) , sumy /= (r - l + 1);
+		for(int i = l ; i <= r ; ++ i)
+			tmpx += pw(a[i].xi - sumx) , tmpy += pw(a[i].yi - sumy);
+		int mid = (l + r) >> 1;
+		if(tmpx > tmpy)
+			nth_element(a + l , a + mid , a + r + 1 , cmpx);
+		else nth_element(a + l , a + mid , a + r + 1 , cmpy);
+		tree[tr] = node(a[mid].xi , a[mid].yi);
+		build(son[tr][0] , l , mid - 1) , build(son[tr][1] , mid + 1 , r);
+		push_up(tr);
+	}
+	
+	priority_queue<ll , vector<ll> , greater<ll> > q;
+	
+	inline void check_ans(const ll x)
+	{
+		if((int)q.size() < k)	return q.push(x);
+		if(q.top() < x)	return q.pop() , q.push(x);
+	}
+	
+	inline bool check(const ll x)
+	{
+		return ((int)q.size() < k || q.top() < x);
+	}
+	
+	inline ll dist(const int xi , const int yi , const int id)
+	{
+		return pw(a[id].xi - xi) + pw(a[id].yi - yi);
+	}
+	
+	inline ll check_id(const int now , const int id)
+	{
+		ll tmp = 0;
+		tmp = max(tmp , dist(tree[now].mxx , tree[now].mxy , id));
+		tmp = max(tmp , dist(tree[now].mxx , tree[now].mny , id));
+		tmp = max(tmp , dist(tree[now].mnx , tree[now].mxy , id));
+		tmp = max(tmp , dist(tree[now].mnx , tree[now].mny , id));
+		return tmp;
+	}
+	
+	void dfs_tree(const int now , const int id)
+	{
+		if(!now)	return;
+//		check_ans(dist(a[now].xi , a[now].yi , id));bug
+		check_ans(dist(tree[now].xi , tree[now].yi , id)); 
+		if(!son[now][0] && !son[now][1]) return;
+		ll tmpl = 0 , tmpr = 0;
+		if(son[now][0]) tmpl = check_id(son[now][0] , id);
+		if(son[now][1]) tmpr = check_id(son[now][1] , id);
+		if(!son[now][0])
+		{
+			if(check(tmpr))	dfs_tree(son[now][1] , id);
+			return;
+		}
+		else if(!son[now][1])
+		{
+			if(check(tmpl)) dfs_tree(son[now][0] , id);
+			return;
+		}
+		else if(tmpl > tmpr)
+		{
+			if(check(tmpl)) dfs_tree(son[now][0] , id);
+			if(check(tmpr)) dfs_tree(son[now][1] , id);
+		}
+		else
+		{
+			if(check(tmpr))	dfs_tree(son[now][1] , id);
+			if(check(tmpl)) dfs_tree(son[now][0] , id);
+		}
+	}
+	
+	inline void main()
+	{
+		n = read() , k = read() * 2;
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i].xi = read() , a[i].yi = read();
+		build(root , 1 , n);
+		for(int i = 1 ; i <= n ; ++ i)
+			if(check(check_id(1 , i)))	dfs_tree(1 , i);
+		printf("%lld\n" , q.top());
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+5 4
+2 4
+5 1
+1 3
+2 1
+3 5
+ans = 17
+*/
