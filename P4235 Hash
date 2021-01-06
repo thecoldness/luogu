@@ -1,0 +1,110 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	const int jzp = 65537;
+	const int G = 3;
+	const int Max_n = 7e4 + 5;
+	
+	int x , n , tot /*f[Max_n] bug*/, ans[35][jzp + 5] , rf[Max_n];
+	int f[Max_n << 2];
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	char c[Max_n];
+	
+	int rev[Max_n << 2] , lim , len , Gi;
+	
+	inline void prepare(const int lenth)
+	{
+		lim = 0 , len = 1;
+		while(len <= lenth) ++ lim , len <<= 1;
+		for(int i = 1 ; i < len ; ++ i)
+			rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (lim - 1));
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+	
+	inline void NTT(int *w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i)
+			if(rev[i] > i)	swap(w[i] , w[rev[i]]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			int base = quickpow(opt == 1 ? G : Gi , (jzp - 1) / (1 << dep));
+			for(int i = 0 ; i < len ; i += (1 << dep))
+			{
+				int q = 1;
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					int ui = w[i + j] , vi = 1ll * q * w[i + j + (1 << (dep - 1))] % jzp;
+					w[i + j] = add(ui , vi) , w[i + j + (1 << (dep - 1))] = add(ui , jzp - vi);
+					q = 1ll * q * base % jzp;
+ 				}
+			}
+		}
+	}
+	
+	inline void main()
+	{
+		Gi = quickpow(G , jzp - 2);
+		int val = 1;
+//		for(int i = 0 ; i < jzp ; ++ i) bug
+		for(int i = 0 ; i < jzp - 1 ; ++ i)
+			rf[val] = i , val = 1ll * val * 3 % jzp;
+		scanf("%d %d" , &x , &n);
+		prepare(jzp - 2);
+		int inv = quickpow(x , jzp - 2);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			memset(c , 0 , sizeof(c)) , memset(f , 0 , sizeof(f));
+			scanf("%s" , c); int len = strlen(c);
+//			printf("%d\n" , len);
+			for(int j = 0 ; j < len ; ++ j)
+//				f[j] = c[len - j] - 'a' + 1; bug
+				f[j] = c[len - j - 1] - 'a' + 1; 
+			NTT(f , 1);
+			for(int j = 1 ; j < x ; ++ j)
+				ans[i][f[rf[j]]] = add(ans[i][f[rf[j]]] , 1);
+			ans[i][c[len - 1] - 'a' + 1] = add(ans[i][c[len - 1] - 'a' + 1] , 1); 
+			for(int j = 0 ; j < jzp ; ++ j)
+				ans[i][j] = 1ll * ans[i][j] * inv % jzp;
+		}
+		int ret = 0;
+		for(int i = 0 ; i < jzp ; ++ i)
+		{
+			int tmp = 1;
+			for(int j = 1 ; j <= n ; ++ j)
+				tmp = 1ll * tmp * add(1 , jzp - ans[j][i]) % jzp;
+			tmp = add(1 , jzp - tmp) , ret = add(tmp , ret); 
+		}
+		printf("%d\n" , ret);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin); 
+	thecold::main();
+	return 0;
+}
