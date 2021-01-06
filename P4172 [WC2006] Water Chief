@@ -1,0 +1,224 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e3 + 5;
+	const int Max_m = 1e5 + 5;
+	
+	int tube[Max_n][Max_n] , n , m , q;
+	
+	struct node
+	{
+		int type , ui , vi;
+		node(int a , int b , int c)
+		{
+			type = a , ui = b , vi = c;
+		}
+		node(){}
+	}opt[Max_m];
+	
+	struct Node
+	{
+		int from , to , val;
+		Node(int a , int b , int c)
+		{
+			from = a , to = b , val = c;
+		}
+		Node(){}
+	}s[Max_m];
+	
+	bool vis[Max_m];
+	
+	int son[Max_m + Max_n][2] , tag[Max_n + Max_m];
+	int fa[Max_n + Max_m] , ans[Max_m] , tot;
+	
+	struct maxn
+	{
+		int id , val;
+		maxn(int a , int b)
+		{
+			id = a , val = b;
+		}
+		maxn(){}
+		inline bool operator < (const maxn &a)const
+		{
+			return val < a.val;
+		}
+	}mx[Max_m + Max_n] , val[Max_n + Max_m];
+
+	inline bool isroot(const int x)
+	{
+		return (son[fa[x]][1] != x) && (son[fa[x]][0] != x);
+	}
+	
+	inline void push_down(const int now)
+	{
+		if(!tag[now]) return;
+		tag[son[now][0]] ^= 1 , tag[son[now][1]] ^= 1;
+		swap(son[now][0] , son[now][1]);
+		tag[now] = 0; // bug
+	}
+	
+	inline void push_up(const int now)
+	{
+		mx[now] = val[now];
+		if(son[now][1]) mx[now] = max(mx[now] , mx[son[now][1]]);
+		if(son[now][0]) mx[now] = max(mx[now] , mx[son[now][0]]);
+	}
+	
+	inline void rotate(const int x)
+	{
+		int fx = fa[x] , ffx = fa[fx];
+//		if(!isroot(ffx)) son[ffx][fx == son[ffx][1]] = x; bug!!!
+		if(!isroot(fx)) son[ffx][fx == son[ffx][1]] = x;
+		bool type = (x == son[fx][1]);
+		fa[fx] = x , fa[son[x][!type]] = fx , fa[x] = ffx;
+		son[fx][type] = son[x][!type] , son[x][!type] = fx;
+		push_up(fx) , push_up(x);
+	}
+	
+	int st[Max_n + Max_m] , tp;
+	
+	inline void push_dw(int now)
+	{
+		st[ ++ tp] = now;
+		while(!isroot(now))
+			now = fa[now] , st[ ++ tp] = now;
+		while(tp)
+			push_down(st[tp --]);
+	}
+	
+	inline void splay(int x)
+	{
+		push_dw(x);
+		while(!isroot(x))
+		{
+			int fx = fa[x] , ffx = fa[fx];
+//			if(!isroot(ffx)) bug
+			if(!isroot(fx))
+			{
+				bool type1 = (x == son[fx][1]) , type2 = (fx == son[ffx][1]);
+				if(type1 == type2)	rotate(fx);
+				else rotate(x);
+			}
+			rotate(x);
+		}
+	}
+	
+	inline void access(const int now)
+	{
+		for(int y = 0 , x = now ; x ; y = x , x = fa[x])
+			splay(x) , son[x][1] = y , push_up(x);
+	}
+	
+	inline int find_root(const int now)
+	{
+//		access(now); bug
+		access(now) , splay(now);
+		int ret = now;
+		while(son[ret][0]) ret = son[ret][0];
+		return ret;
+	}
+	
+	inline void make_root(const int now)
+	{
+		access(now) , splay(now) , tag[now] ^= 1;
+	}
+	
+	inline void split(const int x , const int y)
+	{
+		make_root(x); access(y); splay(y);
+	}
+	
+	inline void link(const int x , const int y)
+	{
+		split(x , y);
+		if(find_root(y) == x) return;
+		fa[x] = y;
+	}
+	
+	inline void cut(const int x , const int y)
+	{
+		split(x , y);
+//		if(son[x][1] || fa[x] != y)	return; bug
+		if(son[y][0] != x || son[x][1]) return;
+		son[y][0] = fa[x] = 0 , push_up(y);
+	}
+	
+	inline void add_edge(const int id)
+	{
+		int ui = s[id].from , vi = s[id].to;
+		split(ui , vi);
+		if(find_root(vi) == ui)
+		{
+			int pos = mx[vi].id - n , va = mx[vi].val;
+//			if(va <= s[pos].val)	return; bug
+			if(va <= s[id].val) return;
+			int tmpf = s[pos].from; cut(tmpf , pos + n);
+			tmpf = s[pos].to; cut(tmpf , pos + n);
+		}
+		make_root(ui) , make_root(vi);// bug
+		link(tube[ui][vi] , ui) , link(vi , tube[ui][vi]);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , q = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			val[i] = maxn(i , 0);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			s[i] = Node(ui , vi , ti) , tube[ui][vi] = tube[vi][ui] = n + i;
+			val[tube[ui][vi]] = maxn(n + i , ti);
+		}
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+//			opt[i] = node(ui , vi , ti) , vis[tube[vi][ti] - n] = true; bug
+			opt[i] = node(ui , vi , ti);
+			if(ui == 2) vis[tube[vi][ti] - n] = true;
+		}
+//		reverse(opt + 1 , opt + q + 1) , reverse(s + 1 , s + m + 1);bug
+		reverse(opt + 1 , opt + q + 1);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			if(vis[i])	continue; add_edge(i);
+		}
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			if(opt[i].type == 1)
+			{
+				split(opt[i].ui , opt[i].vi);
+				ans[ ++ tot] = mx[opt[i].vi].val;
+			}
+			else
+				add_edge(tube[opt[i].ui][opt[i].vi] - n);
+		}
+		reverse(ans + 1 , ans + tot + 1);
+		for(int i = 1 ; i <= tot ; ++ i)
+			printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
