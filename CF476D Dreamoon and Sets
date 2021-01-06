@@ -1,0 +1,24 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	int n , k;
+	
+	inline void main()
+	{
+		scanf("%d %d" , &n , &k);
+		printf("%d\n" , ((n - 1) * 6 + 5) * k);
+		for(int i = 0 ; i < n ; ++ i)
+			printf("%d %d %d %d\n" , (6 * i + 1) * k , (6 * i + 2) * k , (6 * i + 3) * k , (6 * i + 5) * k);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
