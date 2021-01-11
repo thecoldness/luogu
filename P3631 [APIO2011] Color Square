@@ -1,0 +1,155 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int jzp = 1e9;
+	
+	int fa[Max_n << 2] , n , m , k , col[Max_n << 2];
+	int tot , cnt , mst = -1 , ans;
+	
+	int find(const int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+	
+	inline void merge(const int x , const int y)
+	{
+		fa[find(x)] = find(y);
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+	
+	struct node
+	{
+		int xi , yi , ci;
+		node(int a , int b , int c)
+		{
+			xi = a , yi = b , ci = c;
+		}
+		node(){}
+	}s[Max_n] , a[Max_n];
+	
+	inline void work(const int val)
+	{
+		memset(col , -1 , sizeof(col)); // bug
+		for(int i = 1 ; i <= 2 * (n + m) ; ++ i)
+			fa[i] = i;
+		for(int i = 1 ; i <= cnt ; ++ i)
+		{
+			if(a[i].xi % 2 || a[i].yi % 2)// bug
+			{
+				if((a[i].ci ^ val) == 0) merge(a[i].xi , n + a[i].yi) , merge(a[i].xi + n + m , a[i].yi + 2 * n + m);
+				else merge(a[i].xi , a[i].yi + 2 * n + m) , merge(a[i].xi + n + m , a[i].yi + n);
+			}
+			else
+			{
+				if((a[i].ci ^ val)) merge(a[i].xi , n + a[i].yi) , merge(a[i].xi + n + m , a[i].yi + 2 * n + m);
+				else merge(a[i].xi , a[i].yi + 2 * n + m) , merge(a[i].xi + n + m , a[i].yi + n);				
+			}
+		}
+		for(int i = 1 ; i <= n + m ; ++ i)
+			if(find(i) == find(n + m + i))
+			{return;}
+		for(int i = 1 ; i <= tot ; ++ i)
+		{
+			if(s[i].xi == 1)
+			{
+				if((col[find(n + s[i].yi)] != -1) && (col[find(n + s[i].yi)] != s[i].ci))
+					{return;}
+				col[find(n + s[i].yi)] = s[i].ci , col[find(n * 2 + m + s[i].yi)] = s[i].ci ^ 1;
+			}
+			if(s[i].yi == 1)
+			{
+//				if(col[find(s[i].xi)] != -1 && col[find(n + m + s[i].xi)] != s[i].ci) bug
+				if((col[find(s[i].xi)] != -1) && (col[find(s[i].xi)] != s[i].ci))
+					{return;}
+				col[find(s[i].xi)] = s[i].ci , col[find(n + m + s[i].xi)] = s[i].ci ^ 1;
+			}
+		}
+		for(int i = 1 ; i <= n + m ; ++ i)
+//			if((col[find(i)] != -1) && (col[find(i)] ^ col[find(n + m + i)])) bug
+//			if((col[find(i)] != -1) && (col[find(i)] == col[find(n + m + 1)])) bug
+			if((col[find(i)] != -1) && (col[find(i)] == col[find(n + m + i)]))
+				{return;}// bug
+		int all = 0;
+		for(int i = 1 ; i <= 2 * (n + m) ; ++ i)
+			if(find(i) == i && col[i] == -1) 
+				++ all;
+		all /= 2 , all -= 2;// bug
+		ans = add(ans , quickpow(2 , all));
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		for(int i = 1 ; i <= 2 * (n + m) ; ++ i)
+			fa[i] = i;
+		for(int i = 1 ; i <= k ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			if(ui == 1 && vi == 1)
+			{mst = ti; continue;}
+			if(ui == 1 || vi == 1)
+			{ s[ ++ tot] = node(ui , vi , ti); continue;}
+			a[ ++ cnt] = node(ui , vi , ti);
+		}
+		if(mst != -1) work(mst);
+		else work(1) , work(0);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+3 3 4
+2 1 0
+3 1 0
+1 2 0
+3 2 1
+ans = 2
+3 3 4
+3 2 0
+2 3 1
+3 3 0
+2 2 0
+ans = 4
+*/
