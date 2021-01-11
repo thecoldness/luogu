@@ -1,0 +1,143 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	const int base = 1e5;
+	
+	struct node
+	{
+		int l , r , cover , sum;
+		node(int a , int b)
+		{
+			l = a , r = b , cover = sum = 0;	
+		}
+		node(){}
+	}tree[Max_n << 2];
+	
+	struct Node
+	{
+		int xl , yl , xr , yr;
+		Node(int a , int b , int c , int d)
+		{
+			xl = a , yl = b , xr = c , yr = d;
+		}
+		Node(){}
+	}s[Max_n];
+	
+	struct ord
+	{
+		int l , r , sym , val;
+		ord(int a , int b , int c , int d)
+		{
+			l = a , r = b , sym = c , val = d;
+		}
+		ord(){}
+	}a[Max_n];
+	
+	int n; ll ans;
+	
+	inline void push_up(const int tr)
+	{
+		if(tree[tr].l == tree[tr].r)// bug
+		{
+			tree[tr].sum = (tree[tr].cover > 0);
+			return;
+		}
+		if(tree[tr].cover)
+			tree[tr].sum = tree[tr].r - tree[tr].l + 1;
+		else tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r) return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+	}
+	
+	void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r)
+			return tree[tr].cover += val , push_up(tr);
+		change(l , r , tr * 2 , val) , change(l , r , tr * 2 + 1 , val);
+		return push_up(tr);
+	}
+	
+	inline bool cmp(ord a , ord b)
+	{
+//		return a.sym < b.sym; bug
+		if(a.sym != b.sym) return a.sym < b.sym;
+		return a.val > b.val;
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read() , ei = read();
+			s[i] = Node(ui , vi	, ti , ei);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			a[i * 2 - 1] = ord(s[i].xl + base , s[i].xr - 1 + base , s[i].yl , 1);
+			a[i * 2] = ord(s[i].xl + base , s[i].xr - 1 + base , s[i].yr , -1);
+		}
+		sort(a + 1 , a + 2 * n + 1 , cmp); build(1 , 2 * base , 1);
+		int lst = 0;
+		for(int i = 1 ; i <= 2 * n ; ++ i)
+		{
+			change(a[i].l , a[i].r , 1 , a[i].val);
+			ans += abs(lst - tree[1].sum) , lst = tree[1].sum;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			a[i * 2 - 1] = ord(s[i].yl + base , s[i].yr - 1 + base, s[i].xl , 1);
+			a[i * 2] = ord(s[i].yl + base , s[i].yr - 1 + base , s[i].xr , -1);
+		}
+		sort(a + 1 , a + 2 * n + 1 , cmp); build(1 , 2 * base , 1);
+		assert(lst == 0);
+		for(int i = 1 ; i <= 2 * n ; ++ i)
+		{
+			change(a[i].l , a[i].r , 1 , a[i].val);
+			ans += abs(lst - tree[1].sum) , lst = tree[1].sum;
+		}
+		assert(lst == 0);
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+2
+1 1 3 3
+2 2 4 5
+*/
