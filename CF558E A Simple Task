@@ -1,0 +1,133 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	
+	struct node
+	{
+		int l , r , sum , tag;
+		node(int a , int b)
+		{
+			l = a , r = b , sum = 0 , tag = -1;
+		}
+		node(){}
+	}tree[Max_n << 2];
+	
+	struct Node
+	{
+		int l , r , type;
+		Node(){}
+		Node(const int a , const int b , const int c)
+		{
+			l = a , r = b , type = c;
+		}
+	}opt[Max_n];
+	
+	char c[Max_n];
+	
+	int a[Max_n] , n , m , ans[30][Max_n] , lim;
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag == -1) return;
+		tree[tr * 2].tag = tree[tr * 2 + 1].tag = tree[tr].tag;
+		tree[tr * 2].sum = (tree[tr * 2].r - tree[tr * 2].l + 1) * tree[tr].tag;
+		tree[tr * 2 + 1].sum = (tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1) * tree[tr].tag;
+		tree[tr].tag = -1;
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)
+			return tree[tr].sum = (a[l] >= lim) , void();
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	int query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return 0;
+		if(l <= ll && rr <= r)	return tree[tr].sum;
+		push_down(tr);
+		return query(l , r , tr * 2) + query(l , r , tr * 2 + 1);
+	}
+	
+	void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r)
+			return tree[tr].tag = val , tree[tr].sum = (rr - ll + 1) * val , void();
+		push_down(tr);
+		change(l , r , tr * 2 , val) , change(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+	
+	void query_all(const int tr , const int bel)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll == rr)
+			return ans[bel][ll] = tree[tr].sum , void();
+		push_down(tr);
+		query_all(tr * 2 , bel) , query_all(tr * 2 + 1 , bel);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		scanf("%s" , c + 1);
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = c[i] - 'a' + 1;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			opt[i] = Node(ui , vi , ti);
+		}
+		for(int i = 1 ; i <= 26 ; ++ i)
+		{
+			lim = i; build(1 , n , 1);
+			for(int j = 1 ; j <= m ; ++ j)
+			{
+				int cnt = query(opt[j].l , opt[j].r , 1) , sum = opt[j].r - opt[j].l + 1;
+				if(opt[j].type == 0)
+					change(opt[j].l , opt[j].l + cnt - 1 , 1 , 1) , change(opt[j].l + cnt , opt[j].r , 1 , 0);
+				else change(opt[j].l , opt[j].l + sum - cnt - 1 , 1 , 0) , change(opt[j].l + sum - cnt , opt[j].r , 1 , 1);
+			}
+			query_all(1 , i);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+//			for(int j = 1 ; j < 26 ; ++ j) bug
+			for(int j = 1 ; j <= 26 ; ++ j)
+				if(ans[j][i] && !ans[j + 1][i]) {putchar('a' - 1 + j); break;}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
