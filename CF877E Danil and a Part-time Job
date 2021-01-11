@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 2e5 + 5;
+	
+	struct node
+	{
+		int l , r , sum , tag;
+		node(int a , int b)
+		{
+			l = a , r = b , sum = tag = 0;
+		}
+		node(){}
+	}tree[Max_n << 2];
+	
+	int a[Max_n] , dfn[Max_n] , head[Max_n] , n , m , siz[Max_n];
+	int rev[Max_n] , tim , tot;
+	
+	char opt[5];
+	
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node(){}
+	}edge[Max_n];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+	}
+	
+	void dfs_tree(const int now)
+	{
+		dfn[now] = ++ tim , rev[tim] = now , siz[now] = 1;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs_tree(nex);
+			siz[now] += siz[nex];
+		}
+	}
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum = tree[tr * 2].sum + tree[tr * 2 + 1].sum;
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag == 0) return;
+		tree[tr * 2].tag ^= 1 , tree[tr * 2 + 1].tag ^= 1;
+		tree[tr * 2].sum = (tree[tr * 2].r - tree[tr * 2].l + 1) - tree[tr * 2].sum;
+		tree[tr * 2 + 1].sum = (tree[tr * 2 + 1].r - tree[tr * 2 + 1].l + 1) - tree[tr * 2 + 1].sum;
+		tree[tr].tag = 0;
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r) return tree[tr].sum = a[rev[l]] , void();
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	void change(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r)
+			return tree[tr].tag ^= 1 , tree[tr].sum = (rr - ll + 1) - tree[tr].sum , void();
+		push_down(tr);
+		change(l , r , tr * 2) , change(l , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	int query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return 0;
+		if(l <= ll && rr <= r) return tree[tr].sum;
+		push_down(tr);
+		return query(l , r , tr * 2) + query(l , r , tr * 2 + 1);
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			add_edge(read() , i);
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		dfs_tree(1); build(1 , n , 1); m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			scanf("%s" , opt + 1); int pos = read();
+			if(opt[1] == 'g')	printf("%d\n" , query(dfn[pos] , dfn[pos] + siz[pos] - 1 , 1));
+			else change(dfn[pos] , dfn[pos] + siz[pos] - 1 , 1);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
