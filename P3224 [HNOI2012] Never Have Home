@@ -1,0 +1,96 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int Max_m = 5e6 + 5;
+	
+	int son[Max_m][2] , sum[Max_m] , n , m , a[Max_n];
+	int fa[Max_n] , root[Max_n] , siz[Max_n] , tot , rev[Max_n];
+	
+	inline int find(const int x)
+	{
+		int now = x;
+		while(fa[now] != now) now = fa[now];
+		return now;
+	}
+	
+	void insert(const int l , const int r , int &tr , const int pos)
+	{
+		tr = ++ tot , sum[tr] = 1;
+		if(l == r) return;
+		int mid = (l + r) >> 1;
+		if(mid >= pos) insert(l , mid , son[tr][0] , pos);
+		else insert(mid + 1 , r , son[tr][1] , pos);
+	}
+	
+	void update(const int lst , int &tr)
+	{
+		if(!lst || !tr) return tr = lst + tr , void();
+		sum[tr] = sum[lst] + sum[tr];
+		update(son[lst][0] , son[tr][0]) , update(son[lst][1] , son[tr][1]);
+	}
+	
+	inline void merge(int x , int y)
+	{
+		int fx = find(x) , fy = find(y);
+		if(fx == fy) return;
+		if(siz[fx] > siz[fy]) swap(fx , fy);
+		fa[fx] = fy , siz[fy] += siz[fx];
+		update(root[fx] , root[fy]);
+	}
+	
+	int query(const int l , const int r , const int tr , const int kth)
+	{
+		if(l == r) return l;
+		int mid = (l + r) >> 1;
+		if(sum[son[tr][0]] >= kth) return query(l , mid , son[tr][0] , kth);
+		return query(mid + 1 , r , son[tr][1] , kth - sum[son[tr][0]]);
+	}
+	
+	char opt[5];
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , fa[i] = i , siz[i] = 1 , rev[a[i]] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+			insert(1 , n , root[i] , a[i]);
+		for(int i = 1 ; i <= m ; ++ i)
+			merge(read() , read());
+		m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			scanf("%s" , opt + 1); int ui = read() , vi = read();
+			if(opt[1] == 'Q')
+			{
+				int fx = find(ui);
+				if(sum[root[fx]] < vi)	puts("-1");
+				else printf("%d\n" , rev[query(1 , n , root[fx] , vi)]);
+			}
+			else	merge(ui , vi);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
