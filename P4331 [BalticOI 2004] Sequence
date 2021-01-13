@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e6 + 5;
+	
+	int tp , fa[Max_n] , val[Max_n] , a[Max_n];
+	int n , dis[Max_n] , son[Max_n][2];
+	
+	ll ans[Max_n];
+	
+	int find(const int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+	
+	int merge(int x , int y)
+	{
+		if(!x || !y) return x | y;
+		if(val[x] < val[y]) swap(x , y);
+		son[x][1] = merge(son[x][1] , y) , fa[son[x][1]] = x;
+		if(dis[son[x][1]] > dis[son[x][0]]) swap(son[x][1] , son[x][0]);
+		dis[x] = dis[son[x][1]] + 1;
+		return x;
+	}
+	
+	struct node
+	{
+		int l , r , root , hav;
+		node(int a , int b , int c , int d)
+		{
+			l = a , r = b , root = c , hav = d;
+		}
+		node(){}
+	}st[Max_n];
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			a[i] = read() , val[i] = a[i] - i , fa[i] = i;
+			st[ ++ tp] = node(i , i , i , 1);
+			while(tp > 1 && (val[st[tp].root] <= val[st[tp - 1].root]))
+			{
+				int li = st[tp - 1].l , ri = st[tp].r , len = ri - li + 1 , hav = st[tp].hav + st[tp - 1].hav;
+				fa[st[tp].root] = fa[st[tp - 1].root] = merge(st[tp].root , st[tp - 1].root); int tmp = find(st[tp].root);
+				while(hav > (len + 1) / 2)
+				{
+					-- hav , fa[son[tmp][0]] = son[tmp][0] , fa[son[tmp][1]] = son[tmp][1];
+					fa[tmp] = merge(son[tmp][0] , son[tmp][1]); tmp = find(tmp);
+				}
+				tp -= 2; st[ ++ tp] = node(li , ri , tmp , (len + 1) / 2);
+			}
+		}
+		for(int i = 1 ; i <= tp ; ++ i)
+			for(int j = st[i].l ; j <= st[i].r ; ++ j)
+//				ans[j] = 1ll * val[st[tp].root] + j; bug
+				ans[j] = 1ll * val[st[i].root] + j;
+		ll all = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			all += abs(ans[i] - a[i]);
+		printf("%lld\n" , all);
+		for(int i = 1 ; i <= n ; ++ i)
+			printf("%lld " , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
