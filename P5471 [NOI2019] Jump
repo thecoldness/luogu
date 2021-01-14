@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 7e4 + 5;
+	const int Max_m = 1e5 + 1e4 + 5;
+	
+	struct node
+	{
+		int ti , li , ri , di , ui;
+		node(int a , int b , int c , int d , int e)
+		{
+			ti = a , li = b , ri = c , di = d , ui = e;
+		}
+		node(){}
+	}a[Max_m];
+	
+	struct Node
+	{
+		int h[2] , id;
+		Node(int a , int b , int c)
+		{
+			h[0] = a , h[1] = b , id = c;
+		}
+		Node(){}
+		int& operator [](const int a)
+		{
+			return h[a];
+		}
+	}c[Max_n] , rev[Max_n];
+	
+	int n , m , w , h , son[Max_n][2] , tot , dis[Max_n << 1];
+	int dem , root , lx[Max_n][2] , rx[Max_n][2];
+	
+	inline bool cmp(Node a , Node b)
+	{
+		if(a[dem] != b[dem]) return a[dem] < b[dem];
+		return a.id < b.id;
+	}
+	
+	vector<node> v[Max_n];
+	
+	inline void push_up(const int now , const int from)
+	{
+		lx[now][0] = min(lx[now][0] , lx[from][0]) , lx[now][1] = min(lx[now][1] , lx[from][1]);
+		rx[now][0] = max(rx[now][0] , rx[from][0]) , rx[now][1] = max(rx[now][1] , rx[from][1]);
+	}
+	
+	void build(const int l , const int r , int &now , const int type)
+	{
+		if(l > r) return; now = ++ tot; int mid = (l + r) >> 1;
+		if(l == r)
+			return rev[now] = c[l] , lx[now][0] = rx[now][0] = c[l][0] , lx[now][1] = rx[now][1] = c[l][1] , void();
+		dem = type; nth_element(c + l , c + mid , c + r + 1 , cmp);
+//		rev[now] = c[mid] , lx[now][0] = rx[now][0] = c[l][0] , lx[now][1] = rx[now][1] = c[l][1]; bug
+		rev[now] = c[mid] , lx[now][0] = rx[now][0] = c[mid][0] , lx[now][1] = rx[now][1] = c[mid][1];
+		build(l , mid - 1 , son[now][0] , type ^ 1) , build(mid + 1 , r , son[now][1] , type ^ 1);
+		if(son[now][0]) push_up(now , son[now][0]); if(son[now][1]) push_up(now , son[now][1]);
+	}
+	
+	struct God
+	{
+		int id , val;
+		God(int a , int b)
+		{
+			id = a , val = b;
+		}
+		God(){}
+		bool operator < (const God &a) const 
+		{
+			return val > a.val;
+		}
+	};
+	
+	priority_queue<God> zzz;
+	
+	bool vis[Max_n << 1];
+	
+	void query(const int now , const int li , const int ri , const int di , const int ui , const int val)
+	{
+//		if(lx[now][0] > ri || lx[now][1] > ui || rx[now][0] < li || rx[now][0] < di || dis[now] <= val) return;bug
+		if(lx[now][0] > ri || lx[now][1] > ui || rx[now][0] < li || rx[now][1] < di || dis[now] <= val) return;
+		if(lx[now][0] >= li && rx[now][0] <= ri && lx[now][1] >= di && rx[now][1] <= ui)
+		{
+			if(dis[now] > val)
+				dis[now] = val , zzz.push(God(now , val));
+			return;
+		}
+//		if(rev[now][0] >= li && rev[now][0] <= ri && rev[now][1] >= di && rev[now][0] <= ui)bug
+		if(rev[now][0] >= li && rev[now][0] <= ri && rev[now][1] >= di && rev[now][1] <= ui)
+			if(dis[rev[now].id + n] > val)
+				dis[rev[now].id + n] = val , zzz.push(God(rev[now].id + n , val));
+		if(son[now][0]) query(son[now][0] , li , ri , di , ui , val);
+		if(son[now][1]) query(son[now][1] , li , ri , di , ui , val);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , w = read() , h = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int ui = read() , vi = read();
+			c[i] = Node(ui , vi , i);
+		}
+		build(1 , n , root , 0);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int pi = read() , ti = read() , li = read() , ri = read() , di = read() , ui = read();
+			v[pi].push_back(node(ti , li , ri , di , ui));
+		}
+		memset(dis , 0x3f , sizeof(dis));
+		zzz.push(God(n + 1 , 0)); dis[n + 1] = 0;
+		while(!zzz.empty())
+		{
+			int now = zzz.top().id; zzz.pop();
+			if(vis[now]) continue; vis[now] = true;
+			if(now > n)
+			{
+				now -= n; int sz = v[now].size();
+				for(int i = 0 ; i < sz ; ++ i)
+					query(root , v[now][i].li , v[now][i].ri , v[now][i].di , v[now][i].ui , dis[now + n] + v[now][i].ti);
+			}
+			else
+			{
+				if(dis[rev[now].id + n] > dis[now]) dis[rev[now].id + n] = dis[now] , zzz.push(God(rev[now].id + n , dis[now]));
+				if(son[now][0] && dis[son[now][0]] > dis[now]) dis[son[now][0]] = dis[now] , zzz.push(God(son[now][0] , dis[now]));
+				if(son[now][1] && dis[son[now][1]] > dis[now]) dis[son[now][1]] = dis[now] , zzz.push(God(son[now][1] , dis[now]));
+			}
+		}
+		for(int i = 2 ; i <= n ; ++ i)
+			printf("%d\n" , dis[n + i]);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
