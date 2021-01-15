@@ -1,0 +1,121 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int Max_len = 1e7 + 5;
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	int ai[Max_n] , bi[Max_n] , n , head[Max_n];
+	int tot , root[Max_n] , son[Max_len][2] , cnt , hav[Max_len];
+	
+	ll f[Max_n];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	inline ll calc(const int num , const int pos)
+	{
+//		return f[num] + bi[num] * pos; bug
+		return f[num] + 1ll * bi[num] * pos;
+	}
+	
+	ll query(const int now , const int pos , const int l , const int r)
+	{
+		if(!now) return LLONG_MAX;
+		ll ret = calc(hav[now] , pos) , mid = (l + r) >> 1;
+		if(pos <= mid) return min(ret , query(son[now][0] , pos , l , mid));
+		else return min(ret , query(son[now][1] , pos , mid + 1 , r));
+	}
+	
+	void insert(int &now , const int id , const int l , const int r)
+	{
+		if(!now) return now = ++ cnt , hav[now] = id , void();
+		ll tmpl = calc(hav[now] , l) , tmpr = calc(hav[now] , r) , cl = calc(id , l) , cr = calc(id , r);
+		if(tmpl <= cl && tmpr <= cr) return;
+		if(tmpl >= cl && tmpr >= cr) return hav[now] = id , void();
+		int mid = (l + r) >> 1; ll tmpm = calc(hav[now] , mid) , cm = calc(id , mid);
+//		if(tmpm >= cm) return insert(son[now][0] , hav[now] , l , mid) , hav[now] = id , void();
+//		else return insert(son[now][1] , id , mid + 1 , r); bug
+		if(tmpl >= cl)
+		{
+			if(tmpm >= cm) return insert(son[now][1] , hav[now] , mid + 1 , r) , hav[now] = id , void();
+			else return insert(son[now][0] , id , l , mid);
+		}
+		else
+		{
+			if(tmpm >= cm) return insert(son[now][0] , hav[now] , l , mid) , hav[now] = id , void();
+			else return insert(son[now][1] , id , mid + 1 , r);
+		}
+	}
+	
+	void merge(const int lst , int &now , const int l , const int r)
+	{
+		if(!lst) return; if(!now) return now = lst , void();
+		insert(now , hav[lst] , l , r); int mid = (l + r) >> 1;
+		merge(son[lst][0] , son[now][0] , l , mid) , merge(son[lst][1] , son[now][1] , mid + 1 , r);
+	}
+	
+	void dfs_tree(const int now , const int from)
+	{
+		int cnt_son = 0;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to; if(nex == from) continue;
+			dfs_tree(nex , now) , ++ cnt_son;
+			merge(root[nex] , root[now] , -1e5 , 1e5);
+		}
+		if(cnt_son) f[now] = query(root[now] , ai[now] , -1e5 , 1e5);
+		insert(root[now] , now , -1e5 , 1e5);
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			ai[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			bi[i] = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_tree(1 , 0);
+		for(int i = 1 ; i <= n ; ++ i)
+			printf("%lld " , f[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
