@@ -1,0 +1,194 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cstdio>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e4 + 5;
+	
+	int a[Max_n] , b[Max_n] , s[Max_n << 2] , n , q[Max_n] , p[Max_n] , m;
+	int base , sum[Max_n << 2] , tag[Max_n << 2] , hav[Max_n << 2] , len;
+	
+	ll ans;
+	
+	struct node
+	{
+		int pos , hav , lenth;
+		node(int a , int b , int c)
+		{
+			pos = a , hav = b , lenth = c;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			return hav < a.hav;
+		}
+	}d[Max_n << 2];
+	
+	inline int find(const int x)
+	{
+		return lower_bound(s + 1 , s + len + 1 , x) - s;
+	}
+	
+	inline int get_block(const int x)
+	{
+		return (x - 1) / base + 1;
+	}
+	
+	inline void push_down(const int now)
+	{
+		if(!tag[now]) return;
+//		for(int i = (now - 1) * base ; i <= min(len - 1 , now * base) ; ++ i) bug
+		for(int i = (now - 1) * base + 1 ; i <= min(len - 1 , now * base) ; ++ i)
+			d[i].hav += tag[now];
+		tag[now] = 0;// bug	
+	}
+	
+	inline void change(const int l , const int r , const int val)
+	{
+		if(l == r) return;
+		int fl = find(l) , fr = find(r) , bl = get_block(fl) , br = get_block(fr);
+		if(bl == br)
+		{
+			push_down(bl);// bug
+			for(int i = base * (bl - 1) + 1 ; i <= min(base * bl , len) ; ++ i)
+				if(d[i].pos >= fl && d[i].pos < fr)
+					ans -= 1ll * abs(d[i].hav) * d[i].lenth , d[i].hav += val , ans += 1ll * abs(d[i].hav) * d[i].lenth;
+			sort(d + base * (bl - 1) + 1 , d + min(base * bl + 1 , len)); sum[base * (bl - 1) + 1] = d[base * (bl - 1) + 1].lenth;
+			for(int i = base * (bl - 1) + 2 ; i <= min(base * bl , len - 1) ; ++ i)
+//				sum[i] += sum[i - 1]; bug
+				sum[i] = sum[i - 1] + d[i].lenth;
+			return;
+		}
+		push_down(bl);//bug
+		for(int i = base * (bl - 1) + 1 ; i <= base * bl ; ++ i)
+			if(d[i].pos >= fl)
+				ans -= 1ll * abs(d[i].hav) * d[i].lenth , d[i].hav += val , ans += 1ll * abs(d[i].hav) * d[i].lenth;
+		sort(d + base * (bl - 1) + 1 , d + base * bl + 1); sum[base * (bl - 1) + 1] = d[base * (bl - 1) + 1].lenth;
+		for(int i = base * (bl - 1) + 2 ; i <= base * bl ; ++ i)
+//			sum[i] += sum[i - 1]; bug
+			sum[i] = sum[i - 1] + d[i].lenth;
+//		for(int i = base * (br - 1) + 1 ; i <= base * br ; ++ i) bug
+		push_down(br);// bug
+		for(int i = base * (br - 1) + 1 ; i <= min(base * br , len - 1) ; ++ i)
+			if(d[i].pos < fr)
+				ans -= 1ll * abs(d[i].hav) * d[i].lenth , d[i].hav += val , ans += 1ll * abs(d[i].hav) * d[i].lenth;
+		sort(d + base * (br - 1) + 1 , d + min(base * br + 1 , len)); sum[base * (br - 1) + 1] = d[base * (br - 1) + 1].lenth;
+		for(int i = base * (br - 1) + 2 ; i <= min(base * br , len - 1) ; ++ i)
+//			sum[i] += sum[i - 1]; bug
+			sum[i] = sum[i - 1] + d[i].lenth;
+		for(int i = bl + 1 ; i <= br - 1 ; ++ i)
+		{
+//			int pos = lower_bound(d + (i - 1) * base , d + min(i * base + 1 , len) , node(0 , - tag[i] , 0)) - d; bug
+			int pos = lower_bound(d + (i - 1) * base + 1 , d + min(i * base + 1 , len) , node(0 , - tag[i] , 0)) - d;
+			int pos1 = upper_bound(d + (i - 1) * base + 1 , d + min(i * base + 1 , len) , node(0 , - tag[i] , 0)) - d;// bug
+			int lst = sum[(i - 1) * base]; sum[(i - 1) * base] = 0;// bug
+//			ans += 1ll * val * (sum[i * base] - sum[pos1 - 1] + sum[pos - 1]) + sum[pos1 - 1] - sum[pos - 1];  bug
+			ans += 1ll * val * (sum[i * base] - sum[pos1 - 1] - sum[pos - 1]) + sum[pos1 - 1] - sum[pos - 1];
+			sum[(i - 1) * base] = lst , tag[i] += val;
+		}
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+//			a[i] = read() , s[i] = a[i];bug 
+			b[i] = read() , s[i] = b[i];
+		for(int i = 1 ; i <= n ; ++ i)
+//			b[i] = read() , s[n + i] = s[i]; bug
+//			b[i] = read() , s[n + 1] = b[i];bug
+			a[i] = read() , s[n + i] = a[i]; 
+		m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+			q[i] = read() , p[i] = read() , s[2 * n + i] = p[i];
+		sort(s + 1 , s + 2 * n + m + 1); 
+//		len = unique(s + 1 , s + 2 * n + m + 1) - s; bug
+		len = unique(s + 1 , s + 2 * n + m + 1) - s - 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			-- hav[find(a[i])] , ++ hav[find(b[i])];
+		for(int i = 1 ; i < len ; ++ i)
+			hav[i] += hav[i - 1];
+		for(int i = 1 ; i < len ; ++ i)
+			d[i] = node(i , hav[i] , s[i + 1] - s[i]);
+		base = sqrt(len);
+//		for(int i = 1 ; i < len ; i += base) bug
+		for(int i = 1 ; (i - 1) * base + 1 < len ; ++ i)
+//			sort(d + i , d + min(i + base + 1 , len)); bug
+//			sort(d + i , d + min(i * base , len)); bug
+			sort(d + (i - 1) * base + 1 , d + min(i * base + 1 , len));
+//		for(int i = 1 ; i < len ; i += base)
+		for(int i = 1 ; (i - 1) * base + 1 < len ; ++ i)
+		{
+			sum[base * (i - 1) + 1] = d[base * (i - 1) + 1].lenth;
+			for(int j = base * (i - 1) + 2 ; j <= min(base * i , len - 1) ; ++ j)
+				sum[j] = sum[j - 1] + d[j].lenth;
+		}
+		for(int i = 1 ; i <= len ; ++ i)
+			ans += 1ll * abs(d[i].hav) * d[i].lenth;
+		printf("%lld\n" , ans);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			if(p[i] > b[q[i]])	change(b[q[i]] , p[i] , -1);
+			else change(p[i] , b[q[i]] , 1);
+			b[q[i]] = p[i];
+			printf("%lld\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+3
+1 3 4 
+2 4 5 
+2
+3 5
+2 2
+ans :
+3 2 3
+3
+1 2 3 
+1 1 3 
+2
+2 5
+2 4
+ans = 1 4 3
+3
+3 4 5 
+1 2 3 
+2
+2 1
+2 5
+ans = 6 3 7
+3
+1 1 3
+4 5 6 
+3
+1 6
+2 5
+3 4
+ans = 10 5 1 0
+*/
