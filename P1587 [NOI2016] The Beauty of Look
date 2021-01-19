@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <map>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	struct node
+	{
+		int ni , mi , ki;
+		node(int a , int b , int c)
+		{
+			ni = a , mi = b , ki = c;
+		}
+		node(){}
+		bool operator < (const node &a) const
+		{
+			if(ni != a.ni) return ni < a.ni;
+			if(mi != a.mi) return mi < a.mi;
+			return ki < a.ki;
+		}
+	};
+	
+	struct Node
+	{
+		int ni , mi;
+		Node(int a , int b)
+		{
+			ni = a , mi = b;
+		}
+		Node(){}
+		bool operator < (const Node &a) const
+		{
+			if(ni != a.ni) return ni < a.ni;
+			return mi < a.mi;
+		}
+	};
+	
+	map<Node , ll> mp2; map<node , ll> mp; 
+	map<int , ll> get_mu;
+	
+	const int Max_k = 2e3 + 5;
+	const int Max_b = 1e7 + 5;
+	
+	int n , m , k , prime[Max_b] , tot , s[Max_b];
+	int base;
+	
+	ll mu[Max_b];
+	
+	bool vis[Max_b];
+	
+	ll sum_mu(const int x)
+	{
+		if(x <= base)	return mu[x];
+////	if(get_mu.find(n / x) != get_mu.end())	return get_mu[n / x]; bug
+		if(get_mu.find(x) != get_mu.end()) return get_mu[x];
+//		if(vis[n / x]) return get_mu[n / x];
+//		vis[x / x] = true;
+		ll ret = 1; int r = 0;
+		for(ll l = 2 ; l <= x ; l = r + 1)
+		{
+			r = x / (x / l);
+			ret -= sum_mu(x / l) * (r - l + 1);
+		}
+//		return get_mu[n / x] = ret; bug
+		return get_mu[x] = ret;
+//		return get_mu[n / x] = ret;
+	}
+	
+	inline ll solve_edge(int n , int m)
+	{
+		Node now = Node(n , m);
+		if(mp2.find(now) != mp2.end()) return mp2[now];
+		if(n > m) swap(n , m);
+		int l , r; ll ret = 0;
+		for(l = 1 ; l <= n ; l = r + 1)
+		{
+//			r = min((n / l) / l , (m / l) / l); bug
+			r = min(n / (n / l) , m / (m / l));
+			ret += 1ll * (sum_mu(r) - sum_mu(l - 1)) * (n / l) * (m / l);
+		}
+		return mp2[now] = ret;
+//		return ret;
+	}
+	
+	inline ll dfs(const int n , const int m , const int k)
+	{
+		if(n == 0 || m == 0) return 0;
+		node now = node(n , m , k);
+		if(mp.find(now) != mp.end()) return mp[now];
+		if(k == 1) return mp[now] = solve_edge(n , m);
+		ll ret = 0;
+		for(int i = 1 ; s[i] <= k && i <= s[0] ; ++ i)
+			if((k % s[i]) == 0) 
+//				ret += dfs(m / s[i] , n , s[i]); bug
+				ret += dfs(m / s[i] , n , s[i]) * (mu[s[i]] - mu[s[i] - 1]);
+		return mp[now] = ret;
+	}
+	
+	inline void pre_work()
+	{
+		mu[1] = 1;
+		for(int i = 2 ; i <= base ; ++ i)
+		{
+			if(!vis[i]) prime[ ++ tot] = i , mu[i] = -1;
+			for(int j = 1 ; j <= tot && 1ll * prime[j] * i <= base ; ++ j)
+			{
+				vis[i * prime[j]] = true , mu[i * prime[j]] = - mu[i];
+				if(i % prime[j] == 0)
+				{
+//					mu[i] = 0; break; bug
+					mu[i * prime[j]] = 0; break;
+				}
+			}
+		}
+		for(int i = 2 ; i <= base ; ++ i)
+			mu[i] += mu[i - 1];
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , k = read();
+		base = min((int)1e7 , max(k , min(n , m))); pre_work();//memset(vis , false , sizeof(vis));
+		for(int i = 1 ; i <= k ; ++ i)
+			if((mu[i] - mu[i - 1] != 0) && (k % i == 0)) s[ ++ s[0]] = i; 
+//		for(int i = 1 ; i <= s[0] ; ++ i)
+//			printf("%d " , s[i]);
+		printf("%lld\n" , dfs(n , m , k));
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+9 19 2
+ans =78
+*/
