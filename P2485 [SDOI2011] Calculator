@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 40;
+	const int INF = 2e9;
+	
+	int t , y , z , p , k , ans , base[Max_n];
+	int len;
+	
+	map<int , int> mp;
+	
+	inline int quickpow(ll x , ll y , int jzp)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	void dfs_pre(const int dig , const int val , const int hav)
+	{
+		if(dig > len / 2)
+		{
+			if(mp.find(val) == mp.end()) mp[val] = hav;
+			else mp[val] = min(mp[val] , hav); return;
+		}
+		dfs_pre(dig + 1 , val , hav) , dfs_pre(dig + 1 , 1ll * val * quickpow(y , base[dig] , p) % p , hav + base[dig]);
+	}
+	
+	void dfs_aft(const int dig , const int val , const int hav)
+	{
+		if(dig > len)
+		{
+			int tmp = 1ll * z * quickpow(val , p - 2 , p) % p;
+			if(mp.find(tmp) != mp.end()) ans = min(ans , hav + mp[tmp]);
+			return;
+		}
+		dfs_aft(dig + 1 , val , hav) , dfs_aft(dig + 1 , 1ll * val * quickpow(y , base[dig] , p) % p , hav + base[dig]);
+	}
+	
+	inline void main()
+	{
+		t = read() , k = read();
+		for(int i = 0 ; i <= 30 ; ++ i)
+			base[i] = 1 << i;
+		if(k == 1)
+		{
+			while(t --)
+			{
+				y = read() , z = read() , p = read();
+				printf("%d\n" , quickpow(y , z , p));
+			}
+		}
+		if(k == 2)
+		{
+			while(t --)
+			{
+				y = read() , z = read() , p = read();	z %= p , y %= p; 
+				if(y == 0) puts("Orz, I cannot find x!");
+				else printf("%lld\n" , 1ll * z * quickpow(y , p - 2 , p) % p);
+			}
+		}
+		if(k == 3)
+		{
+			while(t --)
+			{
+				y = read() , z = read() , p = read() , y %= p , z %= p;
+				if(y == 0)
+				{
+					if(z == 0) puts("1");
+					else puts("Orz, I cannot find x!");
+					continue;
+				}
+				if(z == 1) { puts("0"); continue; }
+				if(z == 0) { puts("Orz, I cannot find x!"); continue;}
+				mp.clear(); ans = INF;
+				for(int i = 1 ; i <= 30 ; ++ i)
+					if(base[i] > p) {len = i - 1; break;}
+				dfs_pre(0 , 1 , 0) , dfs_aft(len / 2 + 1 , 1 , 0);
+				if(ans == INF) puts("Orz, I cannot find x!");
+				else printf("%d\n" , ans);
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
