@@ -1,0 +1,46 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; char c = getchar();
+		while(!isdigit(c))
+			c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return res;
+	}
+	
+	const int Max_n = 5e5 + 5;
+	
+	int a[Max_n] , n , pre[Max_n] , aft[Max_n] , all;
+	int ansa , ansb;
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , all ^= a[i];
+		if(all == 0) {puts("lose"); return;}
+		for(int i = 1 ; i <= n ; ++ i)	pre[i] = pre[i - 1] ^ a[i];
+		for(int i = n ; i ; -- i)	aft[i] = aft[i + 1] ^ a[i];
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int tmp = pre[i - 1] ^ aft[i + 1];
+			if(a[i] > tmp) {ansa = a[i] - tmp , a[i] = tmp , ansb = i; break;}
+		}
+		printf("%d %d\n" , ansa , ansb);
+		for(int i = 1 ; i <= n ; ++ i)	printf("%d " , a[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
