@@ -1,0 +1,89 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3e5 + 5;
+	
+	int head[Max_n] , n , m , tot , sum[Max_n] , xi[Max_n] , yi[Max_n];
+	int in[Max_n] , cnt , ans;
+	
+	bool nope[Max_n];
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot , ++ in[y];
+	}
+	
+	queue<int> zzz;
+	
+	inline void work()
+	{
+		cnt = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(!in[i]) zzz.push(i) , ++ cnt;
+		while(zzz.size())
+		{
+			int now = zzz.front() , siz = zzz.size(); zzz.pop();
+			if(siz == 1) sum[now] += n - cnt;
+			else if(siz == 2)
+			{
+				int tmp = zzz.front() , all = 0;
+				for(int i = head[tmp] ; i ; i = edge[i].nex)
+//					if(in[edge[i].to] > 1) nope[now] = true , ++ all; bug
+					if(in[edge[i].to] == 1) nope[now] = true , ++ all;
+				sum[now] += n - (cnt + all);
+			}
+			else nope[now] = true;
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to; -- in[nex];
+				if(!in[nex]) zzz.push(nex) , ++ cnt;
+			}
+		}
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= m ; ++ i) xi[i] = read() , yi[i] = read() , add_edge(xi[i] , yi[i]);
+		work(); memset(head , 0 , sizeof(head)) , memset(in , 0 , sizeof(in)); tot = 0;
+		for(int i = 1 ; i <= m ; ++ i) add_edge(yi[i] , xi[i]); work();
+		for(int i = 1 ; i <= n ; ++ i) 
+//			if(!nope[i] && sum[i] >= n - 1) ++ ans; bug
+			if(!nope[i] && sum[i] >= n - 2) ++ ans;
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
