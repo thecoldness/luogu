@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	int base , n , m , a[Max_n] , ans[Max_n];
+	int buk[Max_n * 5] , tim , lst[Max_n] , tmp_ans;
+
+	inline int get_block(const int x)
+	{
+		return (x - 1 + base) / base;
+	}
+
+	struct node
+	{
+		int li , ri , ti;
+		node(int a , int b , int c)
+		{
+			li = a , ri = b , ti = c;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			if(get_block(li) != get_block(a.li)) return get_block(li) < get_block(a.li);
+			if(get_block(ri) != get_block(a.ri)) return get_block(ri) < get_block(a.ri);
+			return ti < a.ti;
+		}
+	}b[Max_n];
+
+	struct Node
+	{
+		int lst , ui , vi;
+		Node(int a , int b , int c)
+		{
+			lst = a , ui = b , vi = c;
+		}
+		Node(){}
+	}opt[Max_n];
+
+	char c[5];
+
+	inline void del(const int x)
+	{
+		if(-- buk[x] == 0) -- tmp_ans;
+	}
+
+	inline void add(const int x)
+	{
+		if(++ buk[x] == 1) ++ tmp_ans;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , base = pow(n , 2.0 / 3.0);
+		for(int i = 1 ; i <= n ; ++ i) lst[i] = a[i] = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			scanf("%s" , c + 1);int ui = read() , vi = read();
+			if(c[1] == 'Q') b[ ++ tim] = node(ui , vi , i);
+			else opt[i] = Node(lst[ui] , ui , vi) , lst[ui] = vi;
+		}
+		sort(b + 1 , b + tim + 1);
+		int l = 1 , r = 0 , time = 0;
+		for(int i = 1 ; i <= tim ; ++ i)
+		{
+			int nowl = b[i].li , nowr = b[i].ri , nowt = b[i].ti;
+			while(l < nowl) del(a[l ++]);
+			while(r > nowr) del(a[r --]);  
+			while(l > nowl) add(a[-- l]);
+			while(r < nowr) add(a[++ r]);
+			while(time > nowt)
+				if(opt[time].lst)
+				{
+					if(opt[time].ui >= l && opt[time].ui <= r)	
+						del(opt[time].vi) , add(opt[time].lst);
+					a[opt[time].ui] = opt[time].lst; -- time;
+				}
+				else -- time;
+			while(time < nowt)
+				if(opt[ ++ time].lst)
+				{
+					if(opt[time].ui >= l && opt[time].ui <= r)
+						del(opt[time].lst) , add(opt[time].vi);
+					a[opt[time].ui] = opt[time].vi;
+				}
+			ans[nowt] = tmp_ans;
+		}
+		for(int i = 1 ; i <= m ; ++ i) if(!opt[i].lst) printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
