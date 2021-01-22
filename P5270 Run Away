@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <vector>
+#include <deque>
+#include <random>
+#include <cstdlib>
+#include <chrono>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	typedef unsigned long long nll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	
+	int s[Max_n] , n , t , q , r[Max_n] , m , len[Max_n];
+	int lenth , rem , cnt , sum_ans;
+	
+	nll hash , goal , rdom[Max_n]; ll ans[Max_n];
+	
+	vector<int> a[Max_n];
+	
+	deque<int> zzz;
+	
+	mt19937 rnd;
+	
+	inline nll getr(const nll l , const nll r)
+	{
+		uniform_int_distribution<nll> dis(l , r);
+		return dis(rnd);
+	}
+	
+	inline void main()
+	{
+		n = read() , t = read() , q = read();
+		for(int i = 1 ; i <= t ; ++ i) s[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			len[i] = read();
+			for(int j = 1 ; j <= len[i] ; ++ j) a[i].push_back(read());
+		}
+		m = read(); for(int i = 1 ; i <= m ; ++ i) r[i] = read();
+		rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+		for(int i = 0 ; i <= 1e5 ; ++ i) rdom[i] = getr(1 , 5e18);
+		for(int i = 1 ; i <= t ; ++ i) goal += rdom[s[i]];
+		while(lenth < t && cnt * m < q)
+		{
+			++ cnt;
+			for(int i = 1 ; i <= min(m , q - cnt * m) ; ++ i)
+			{
+				// lenth += len[i]; bug
+				lenth += len[r[i]];
+				for(int j = 0 ; j < len[r[i]] ; ++ j)
+					zzz.push_back(a[r[i]][j]) , hash += rdom[a[r[i]][j]];
+				while(zzz.size() > t) hash -= rdom[zzz.front()] , zzz.pop_front();
+				if(hash == goal) ++ sum_ans;
+			}
+		}
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			for(int j = 0 ; j < len[r[i]] ; ++ j) 
+				zzz.push_back(a[r[i]][j]) , hash += rdom[a[r[i]][j]];
+			while(zzz.size() > t) hash -= rdom[zzz.front()] , zzz.pop_front();
+			if(hash == goal) ++ ans[i];
+		}
+		for(int i = 1 ; i <= m ; ++ i) ans[i] += ans[i - 1]; 
+		int rem = q - cnt * m; //printf("\n%d\n" , sum_ans);
+		printf("%d\n" , sum_ans + 1ll * ans[m] * (rem / m) + ans[rem % m]);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
