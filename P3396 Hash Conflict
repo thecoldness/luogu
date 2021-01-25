@@ -1,0 +1,59 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5e4 + 5;
+
+	int s[211][Max_n] , a[Max_n] , m , n , base , x , y;
+
+	char opt[5];
+
+	inline void main()
+	{
+		n = read() , m = read() , base = min((int)sqrt(n) , 210);
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read();
+		for(int p = 1 ; p <= base ; ++ p)
+			for(int i = 1 ; i <= n ; ++ i) s[p][i % p] += a[i];
+		while(m --)
+		{
+			scanf("%s" , opt + 1); x = read() , y = read();
+			if(opt[1] == 'A')
+			{
+				if(x <= base) printf("%d\n" , s[x][y]);
+				else
+				{
+					int ret = 0;
+					for(int i = y ; i <= n ; i += x) ret += a[i];
+					printf("%d\n" , ret);
+				}
+			}
+			else
+			{
+				for(int p = 1 ; p <= base ; ++ p) s[p][x % p] += y - a[x];
+				a[x] = y;
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
