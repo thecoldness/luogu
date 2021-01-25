@@ -1,0 +1,36 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	ll ans; int n , k , l , r;
+
+	inline ll calc(const int x)
+	{
+		return 1ll * x * (x + 1) / 2;
+	}
+
+	inline void main()
+	{
+		scanf("%d %d" , &n , &k); ans = 1ll * n * k;
+		for(l = 1 ; l <= min(n , k) ; l = r + 1)
+		{
+			r = min(k / (k / l) , n);
+			// printf("%d %d \n" , l , r);
+			// ans -= 1ll * (calc(r) - calc(l - 1)) * k / l; bug
+			ans -= 1ll * (calc(r) - calc(l - 1)) * (k / l);
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
