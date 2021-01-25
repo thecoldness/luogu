@@ -1,0 +1,118 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cstdlib>
+#include <random>
+#include <chrono>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	typedef unsigned long long nll;
+
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+	const int base = 131; const int jzp = 998244353;
+
+	inline int qp(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	int n , m , a[Max_n] , b[Max_n] , tot , root , hav[Max_n] , hash[Max_n] , hsh;;
+	int son[Max_n][2] , val[Max_n] , siz[Max_n] , rev[Max_n] , rnd[Max_n];
+
+	mt19937 hhh;
+
+	inline int getr(const int l , const int r)
+	{
+		uniform_int_distribution<int> dis(l , r);
+		return dis(hhh);
+	}
+
+	inline int build(const int x)
+	{
+		return val[ ++ tot] = x , rnd[tot] = getr(1 , 1e9) , rev[x] = tot;
+	}
+
+	int merge(const int x , const int y)
+	{
+		if(!x || !y) return x | y;
+		if(rnd[x] < rnd[y]) return son[x][1] = merge(son[x][1] , y) , x;
+		else return son[y][0] = merge(x , son[y][0]) , y;
+	}
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void push_up(const int x)
+	{
+		siz[x] = siz[son[x][0]] + siz[son[x][1]] + hav[x];
+		// hash[x] = add(hash[son[x][1]] , 1ll * add(1ll * hash[son[x][0] ] * base % jzp , hav[x] * val[x]) * qp(base , siz[son[x][1]]) % jzp); bug
+		hash[x] = add(hash[son[x][1]] , 1ll * add(1ll * hash[son[x][0]] * qp(base , hav[x]) % jzp , hav[x] * val[x]) * qp(base , siz[son[x][1]]) % jzp);
+	}
+
+	void change(const int now , const int va , const int cnt)
+	{
+		if(now == va) return hav[now] += cnt , push_up(now);
+		// if(rnd[now] < rnd[va]) change(son[now][1] , va , cnt); bug
+		if(now < va) change(son[now][1] , va , cnt);
+		else change(son[now][0] , va , cnt); 
+		push_up(now);
+	}
+
+	int ans;
+
+	inline void main()
+	{
+		n = read() , m = read(); hhh.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read() , hsh = add(1ll * hsh * base % jzp , a[i]);
+		for(int i = 1 ; i <= m ; ++ i) b[i] = read();
+		// for(int i = 1 ; i <= n ; ++ i) root = merge(root , build(b[i])); bug
+		for(int i = 1 ; i <= m ; ++ i) root = merge(root , build(b[i]));
+		for(int i = 1 ; i <= n ; ++ i) change(root , rev[i] , 1);
+		for(int i = n + 1 ; i <= m ; ++ i)
+		{
+			if(hash[root] == hsh) ++ ans;
+			change(root , rev[i - n] , -1) , change(root , rev[i] , 1);
+			hsh = add(hsh , 1ll * (qp(base , n) - 1) * qp(base - 1 , jzp - 2) % jzp);
+			// printf("%d %d\n" , hash[root] , hsh);
+		}
+		if(hash[root] == hsh) ++ ans;
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+2 4
+2 1
+1 4 2 3
+*/
