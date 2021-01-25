@@ -1,0 +1,116 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	const int Max_n = 1e5 + 5;
+	const int jzp = 998244353;
+
+	int prime[Max_n] , phi[Max_n] , n , m , k , tot;
+	int ans;
+
+	ll jc[Max_n] , invjc[Max_n];
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void pre_work()
+	{
+		phi[1] = 1;
+		for(int i = 2 ; i <= n ; ++ i)
+		{
+			if(!phi[i]) phi[i] = i - 1 , prime[ ++ tot] = i;
+			for(int j = 1 ; j <= tot && 1ll * prime[j] * i <= n ; ++ j)
+			{
+				// phi[i * prime[j]] = phi[i] * prime[j];
+				// if(i % prime[j] == 0) {phi[i * prime[j]] = phi[i] * phi[prime[j]]; break;} bug!!!
+				phi[i * prime[j]] = phi[i] * phi[prime[j]];
+				if(i % prime[j] == 0) {phi[i * prime[j]] = phi[i] * prime[j]; break;}
+			}
+		}
+		jc[0] = invjc[0] = 1;
+		for(int i = 1 ; i <= n ; ++ i)	jc[i] = jc[i - 1] * i % jzp;
+		invjc[n] = quickpow(jc[n] , jzp - 2);
+		for(int i = n - 1 ; i ; -- i) invjc[i] = invjc[i + 1] * (i + 1) % jzp;
+	}
+
+	inline int C(const int n , const int m)
+	{
+		if(m > n) return 0;
+		return (jc[n] * invjc[m] % jzp) * invjc[n - m] % jzp;
+	}
+
+	inline int calc(const int x , const int y)
+	{
+		if(y == 0) return x == 0;
+		return C(x + y - 1 , y - 1);
+	}
+
+	inline int g(const int a , const int b , const int c)
+	{
+		int ret = 0; assert(a >= 0);
+		for(int i = 0 ; 1ll * i * (c + 1) <= a && i <= b ; ++ i)
+			if(i % 2) ret = add(ret , jzp - 1ll * calc(a - i * (c + 1) , b) * C(b , i) % jzp);
+			else ret = add(ret , 1ll * calc(a - i * (c + 1) , b) * C(b , i) % jzp);
+		return ret;
+	}
+
+	inline int f(const int d)
+	{
+		if(m % (n / d)) return 0;
+		int a = m / (n / d) , b = (n - m) / (n / d) , ret = 0;
+		if(a <= k) return C(a + b , a);
+		for(int i = 0 ; i <= min(k , a) ; ++ i)
+			ret = add(ret , 1ll * (i + 1) * g(a - i , b - 1 , k) % jzp);
+		return ret;
+	}
+
+	inline void main()
+	{
+		scanf("%d %d %d" , &n , &m , &k);
+		if(m == 0) {puts("1"); return;}
+		if(m == n)
+		{
+			if(k < m) puts("0");
+			else puts("1");
+			return;
+		}
+		pre_work();
+		for(int i = 1 ; i * i <= n ; ++ i)
+			if(n % i == 0)
+			{
+				ans = add(ans , 1ll * f(i) * phi[n / i] % jzp);
+				if(i * i != n) ans = add(ans , 1ll * f(n / i) * phi[i] % jzp);
+			}
+		ans = 1ll * ans * quickpow(n , jzp - 2) % jzp;
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
