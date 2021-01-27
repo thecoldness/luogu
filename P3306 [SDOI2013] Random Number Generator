@@ -1,0 +1,122 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <map>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	typedef long long ll;
+
+	int jzp , xi , a , b , x1 , T , base;
+	int ans;
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	map<int , int> mp;
+
+	inline int ni(const int x)
+	{
+		return quickpow(x , jzp - 2);
+	}
+
+	inline int get(const int x)
+	{
+		return (x % jzp + jzp) % jzp;
+	}
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void main()
+	{
+		T = read();
+		while(T -- )
+		{
+			jzp = read() , a = read() , b = read() , x1 = read() , xi = read() , ans = jzp + 5;
+			if(x1 == xi) {puts("1"); continue;}
+			if(a == 0)
+			{
+				if(xi == b) puts("2");
+				else puts("-1");
+				continue;
+			}
+			mp.clear(); base = sqrt(jzp);
+			if(a == 1)
+			{
+				int goal = get(xi - x1); mp[0] = 0;
+				for(int i = 1 ; i <= base ; ++ i)
+				{
+					int tmp = 1ll * b * i % jzp;
+					if(tmp == goal) {ans = i; break;}
+					if(mp.find(tmp) == mp.end()) mp[tmp] = i;
+				}
+				if(ans != jzp + 5) {printf("%d\n" , ans + 1); continue;}
+				// int basal = quickpow(b , base + 1) , tmp = 0; bug
+				int basal = 1ll * b * (base + 1) % jzp , tmp = 0;
+				for(int i = 1 ; i * (base + 1) <= jzp ; ++ i)
+				{
+					tmp = add(tmp , basal);
+					if(mp.find(get(goal - tmp)) != mp.end()) {ans = (base + 1) * i + mp[get(goal - tmp)]; break;}
+				}
+				if(ans != jzp + 5) printf("%d\n" , ans + 1);
+				else puts("-1"); 
+				continue;// bug
+			}
+			int ti = a , ki = 1ll * b * ni(a - 1) % jzp , f1 = add(x1 , ki) , fi = add(xi , ki);
+			int goal = 1ll * fi * ni(f1) % jzp , tmp = 1 , basal;
+			for(int i = 0 ; i <= base ; ++ i)
+			{
+				if(tmp == goal) {ans = i; break;}
+				if(mp.find(tmp) == mp.end()) mp[tmp] = i;
+				tmp = 1ll * tmp * ti % jzp;
+			}
+			if(ans != jzp + 5) {printf("%d\n" , ans + 1); continue;}
+			basal = tmp , tmp = 1;
+			for(int i = 1 ; i * (base + 1) <= jzp ; ++ i)
+			{
+				tmp = 1ll * tmp * basal % jzp; int hhh = 1ll * goal * ni(tmp) % jzp;
+				if(mp.find(hhh) != mp.end()) {ans = i * (base + 1) + mp[hhh]; break;}
+			}
+			if(ans != jzp + 5) printf("%d\n" , ans + 1);
+			else puts("-1");
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+1
+29 1 10 18 26
+ans = 25
+*/
