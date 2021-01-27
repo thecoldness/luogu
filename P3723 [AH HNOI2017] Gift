@@ -1,0 +1,112 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const double PI = acos(-1.0);
+	const int Max_n = 5e4 + 5;
+
+	struct complex
+	{
+		double s , x;
+		complex(double a , double b)
+		{
+			s = a , x = b;
+		}
+		complex(){}
+	};
+
+	complex operator + (complex a , complex b)
+	{
+		return complex(a.s + b.s , a.x + b.x);
+	}
+
+	complex operator - (complex a , complex b)
+	{
+		return complex(a.s - b.s , a.x - b.x);
+	}
+
+	complex operator * (complex a , complex b)
+	{
+		return complex(a.s * b.s - a.x * b.x , a.s * b.x + a.x * b.s);
+	}
+
+	int n , m , a[Max_n] , b[Max_n] , sum;
+
+	complex f[Max_n << 3] , g[Max_n << 3];
+
+	int len , lim , rev[Max_n << 3];
+
+	ll ans , mx;
+
+	inline void prepare(const int lenth)
+	{
+		len = 1 , lim = 0;
+		while(len <= lenth) len <<= 1 , ++ lim;
+		for(int i = 1 ; i < len ; ++ i) rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (lim - 1));
+	}
+
+	inline void FFT(complex* w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i)
+			if(rev[i] > i) swap(w[i] , w[rev[i]]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			complex base = complex(cos(2.0 * PI / (1 << dep)) , opt * sin(2.0 * PI / (1 << dep)));
+			for(int i = 0 ; i < len ; i += 1 << dep)
+			{
+				complex q = complex(1 , 0);
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					complex ui = w[i + j] , vi = q * w[i + j + (1 << (dep - 1))];
+					w[i + j] = ui + vi , w[i + j + (1 << (dep - 1))] = ui - vi;
+					q = q * base;
+				}
+			}
+		}
+		if(opt == -1)
+			for(int i = 0 ; i < len ; ++ i) w[i].s /= len;
+	}
+
+	inline ll calc(const ll x)
+	{
+		return 2ll * x * sum + x * x * n;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read() , ans += a[i] * a[i] , sum += a[i];
+		for(int i = 1 ; i <= n ; ++ i) b[i] = read() , ans += b[i] * b[i] , sum -= b[i];
+		for(int i = 1 ; i <= n ; ++ i) f[n - i] = complex(a[i] , 0) , g[i] = complex(b[i] , 0) , g[i + n] = complex(b[i] , 0);
+		prepare(n * 3) , FFT(f , 1) , FFT(g , 1);
+		for(int i = 0 ; i < len ; ++ i) f[i] = f[i] * g[i]; 
+		FFT(f , -1);
+		for(int i = n ; i < 2 * n ; ++ i)	mx = max(mx , (ll)(f[i].s + 0.5));
+		int ki = -sum / n , dou = min(calc(ki - 1) , min(calc(ki) , calc(ki + 1)));
+		ans += dou - 2ll * mx; printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
