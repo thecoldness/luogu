@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <cctype>
+#include <chrono>
+#include <random>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline ll read()
+	{
+		ll res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	int n , ans = Max_n , t = 30;
+
+	mt19937 rnd;
+
+	ll a[Max_n];
+
+	inline int getr(const int l , const int r)
+	{
+		uniform_int_distribution<int> dis(l , r);
+		return dis(rnd);
+	}
+
+	inline void check(const ll x , const int delta)
+	{
+		if(x == 0) return;
+		ll ret = 0 , tmp = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			tmp = a[i] % x;//ret += min(tmp , x - tmp); bug
+			if(tmp == a[i]) ret += x - tmp;
+			else ret += min(tmp , x - tmp);
+		}
+		ans = min(1ll * ans , ret + delta); //printf("%lld %d\n" , x , ret);
+		// for(int i = 1 ; i <= n ; ++ i) printf("%lld " , a[i]);
+			// puts("");
+	}
+
+	inline void solve(ll x , const int delta)
+	{
+		for(int i = 2 ; 1ll * i * i <= x ; ++ i)
+		{
+			if(x % i) continue;
+			check(i , delta); while(x % i == 0) x /= i;
+		}
+		if(x != 1) check(x , delta);
+	}
+
+	inline void main()
+	{
+		n = read(); rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read();
+		while(t --)
+		{
+			int i = getr(1 , n);ll tmp = a[i];
+			solve(a[i] , 0) , ++ a[i] , solve(a[i] , 1) , a[i] -= 2 , solve(a[i] , 1) , a[i] = tmp;
+		}
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
