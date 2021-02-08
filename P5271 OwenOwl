@@ -1,0 +1,48 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	int p , k;
+
+	inline int quickpow(int x , int y)
+	{
+		int ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = x * ret;
+			x = x * x , y >>= 1;
+		}
+		return ret;
+	}
+
+	void solve(const int str , const int len)
+	{
+		if(len < 0) return;
+		int cnt = quickpow(p , len);
+		for(int k = 0 ; k < cnt ; ++ k)
+			for(int i = 0 ; i < cnt ; ++ i)
+			{
+				for(int j = 0 ; j < p ; ++ j) printf("%d " , str + cnt * j + (i + k * j) % cnt);
+				puts("");
+			}
+		for(int i = 0 ; i < p ; ++ i)
+			solve(str + i * cnt , len - 1);
+	}
+
+	inline void main()
+	{
+		puts("YES");
+		scanf("%d %d" , &p , &k);
+		solve(0 , k - 1);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
