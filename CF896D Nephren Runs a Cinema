@@ -1,0 +1,156 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	typedef long long ll;
+
+	const int Max_n = 15;
+
+	int p , jzp , n , l , r , jzpk;
+	int ans[Max_n] , mod[Max_n] , cnt;
+
+	inline int quickpow(ll x , ll y , int jzp)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	struct node
+	{
+		ll s , x;
+		node(ll a , ll b)
+		{
+			s = a , x = b;
+		}
+		node(){}
+
+		node (int a)
+		{
+			s = a , x = 0;
+			// while(x % jzp == 0) s /= jzp , ++ x; bug
+			while(s && s % jzp == 0) s /= jzp , ++ x;
+		}
+
+		inline int into()
+		{
+			// return s * x % jzp; bug
+			// return s * quickpow(x , jzp , jzpk) % jzpk;bug
+			return s * quickpow(jzp , x , jzpk) % jzpk;
+		}
+	};
+
+	ll x , y;
+
+	int gcd(const int a , const int b)
+	{
+		return b == 0 ? a : gcd(b , a % b);
+	}
+
+	void exgcd(const int a , const int b) // ax + by = gcd(a , b)
+	{
+		if(b == 0) return x = 1 , y = 0 , void();
+		exgcd(b , a % b); ll tmpx = x , tmpy = y;
+		x = tmpy , y = tmpx - a / b * y;
+	}
+
+	inline int ni(const int a , const int b)
+	{
+		exgcd(a , b);
+		return (x % b + b) % b;
+	}
+
+	inline node operator * (node a , node b)
+	{
+		return node(a.s * b.s % jzpk , a.x + b.x);
+	}
+
+	inline node operator / (node a , node b)
+	{
+		int inv = ni(b.s , jzpk);
+		return node(a.s * inv % jzpk , a.x - b.x);
+	}
+
+	inline int add(const int x , const int y , const unsigned int jzp)
+	{
+		unsigned int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline int solve(const int n , const int r , const int delta)
+	{
+		node pre = node(1 , 0) , aft; int ret = 0;
+		int beg = -1;
+		for(int d = 0 ; d <= n ; ++ d)
+		{
+			// if(d >= r && (d - r) / 2  + delta <= d) {beg = d; break;} bug
+			if(d >= r && (d - r) / 2  + delta <= d && (d - r) / 2 + delta >= 0) {beg = d; break;}
+			pre = pre * node(n - d) / node(d + 1);
+		}
+		if(beg == -1) return 0;
+		int tmpn = beg , tmpm = (beg - r) / 2 + delta;
+		aft = node(1 , 0); for(int i = 0 ; i < tmpm ; ++ i) aft = aft * node(tmpn - i);
+		for(int d = beg ; d <= n ; ++ d)
+		{
+			node tmp = pre * aft;
+			ret = add(ret , tmp.into() , jzpk);
+			pre = pre * node(n - d) / node(d + 1);
+			// if((r + beg) & 1) aft = aft * node(d + 1) / node((d - r) / 2 + 1 + delta); bug
+			if((r + d) & 1) aft = aft * node(d + 1) / node((d - r) / 2 + 1 + delta); 
+			else aft = aft * node(d + 1) / node(d + 1 - (d - r) / 2 - delta);
+		}
+		return ret;
+	}
+
+	inline void main()
+	{
+		n = read() , p = read() , l = read() , r = read(); int tmp = p;
+		for(int i = 2 ; i * i <= tmp ; ++ i)
+		{
+			if(tmp % i) continue;
+			jzp = i , jzpk = 1 , ++ cnt;
+			while(tmp % i == 0) jzpk *= i , tmp /= i;
+			// ans[cnt] += solve(n , r , 0) , ans[cnt] -= solve(n , l , -1) , mod[cnt] = jzpk; bug
+			ans[cnt] += solve(n , l , 0) , ans[cnt] = add(ans[cnt] , jzpk - solve(n , r - 1 , -1) , jzpk) , mod[cnt] = jzpk;
+		}
+		if(tmp != 1)// bug
+		{
+			jzpk = jzp = tmp , ++ cnt;
+			ans[cnt] = solve(n , l , 0) , ans[cnt] = add(ans[cnt] , jzpk - solve(n , r - 1 , -1) , jzpk) , mod[cnt] = jzpk;
+		}
+		int ret = 0;
+		for(int i = 1 ; i <= cnt ; ++ i)
+		{
+			int mi = p / mod[i] , ti = ni(mi , mod[i]);
+			ret = add(ret , 1ll * ans[i] * mi * ti % p , p);
+		}
+		printf("%d\n" , ret);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
