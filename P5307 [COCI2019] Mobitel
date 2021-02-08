@@ -1,0 +1,68 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0 ;bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e6 + 5;
+	const int Max_s = 305;
+	const int jzp = 1e9 + 7;
+	const int Max_d = 2e3 + 5;
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	int lsh[Max_n] , a[Max_s][Max_s] , r , s , n;
+	int len , f[2][Max_s][Max_d] , rev[Max_n];
+
+	inline int find(const int x)
+	{
+		return rev[x];
+	}
+
+	inline void main()
+	{
+		r = read() , s = read() , n = read();
+		for(int i = 1 ; i <= n ; ++ i) lsh[i] = (n - 1) / i + 1;
+		for(int i = 1 ; i <= r ; ++ i)
+			for(int j = 1 ; j <= s ; ++ j) a[i][j] = read();
+		sort(lsh + 1 , lsh + n + 1) , len = unique(lsh + 1 , lsh + n + 1) - lsh;
+		for(int i = 1 ; i < len ; ++ i) rev[lsh[i]] = i;
+		f[0][1][len - 1] = 1; assert(lsh[len - 1] == n) , assert(lsh[1] == 1);
+		for(int i = 1 ; i <= r ; ++ i)
+		{
+			int bel = i & 1; memset(f[bel] , 0 , sizeof(f[bel]));
+			for(int j = 1 ; j <= s ; ++ j)
+				for(int k = 1 ; k < len ; ++ k)
+				{
+					int nex = find((lsh[k] - 1) / a[i][j] + 1);
+					f[bel][j][nex] = add(f[bel][j][nex] , add(f[bel][j - 1][k] , f[bel ^ 1][j][k]));
+				}
+		}
+		printf("%d\n" , f[r & 1][s][1]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
