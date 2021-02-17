@@ -1,0 +1,80 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	int jzp , n , m;
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void ADD(int &x , const int y)
+	{
+		x += y; if(x >= jzp) x -= jzp;
+	}
+
+	typedef long long ll;
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	const int Max_n = 55;
+
+	int tot , ans , bef[Max_n] , jc[Max_n] , g[Max_n][Max_n];
+
+	int gcd(const int a , const int b)
+	{
+		return b == 0 ? a : gcd(b , a % b);
+	}
+
+	inline int ni(const int x)
+	{
+		return quickpow(x , jzp - 2);
+	}
+
+	inline void dfs(const int rem , const int now , const int sum , const int prod , const int lst , const int len)
+	{
+		int pj = 1ll * prod * jc[len] % jzp , tmp = 0;
+		if(rem < lst) return !rem ? ADD(ans , 1ll * ni(pj) * quickpow(m , sum) % jzp) : void();
+		for(int i = 1 ; i < now ; ++ i) tmp += g[lst][bef[i]];
+		if(lst) bef[now] = lst , dfs(rem - lst , now + 1 , sum + lst / 2 + tmp , 1ll * prod * lst % jzp, lst , len + 1);
+		for(int i = lst + 1 ; i <= rem ; ++ i)
+		{
+			tmp = 0 , bef[now] = i;
+			for(int j = 1 ; j < now ; ++ j) tmp += g[i][bef[j]];
+			dfs(rem - i , now + 1 , sum + i / 2 + tmp , 1ll * pj * i % jzp , i , 1);
+		}
+	}
+
+	inline void main()
+	{
+		scanf("%d %d %d" , &n , &m , &jzp);
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i ; j <= n ; ++ j)
+				g[i][j] = g[j][i] = gcd(i , j);
+		jc[0] = 1; for(int i = 1 ; i <= n ; ++ i) jc[i] = 1ll * jc[i - 1] * i % jzp;
+		dfs(n , 1 , 0 , 1 , 0 , 0); printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
