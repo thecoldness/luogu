@@ -1,0 +1,101 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	const int jzp = 1004535809;
+	const int G = 3;
+
+	typedef long long ll;
+
+	inline int read()
+	{
+		ll res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = (res * 10 + (c ^ 48)) % jzp , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	int a[Max_n << 2] , n , k , t , rev[Max_n << 2];
+	int lim , len , f[Max_n << 2] , Gi;
+
+	inline int ni(const int x)
+	{
+		return quickpow(x , jzp - 2);
+	}
+
+	inline void prepare(const int lenth)
+	{
+		len = 1 , lim = 0;
+		while(len <= lenth) ++ lim , len <<= 1;
+		for(int i = 1 ; i < len ; ++ i) rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (lim - 1));
+	}
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void NTT(int *w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i) if(rev[i] > i) swap(w[rev[i]] , w[i]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			int base = quickpow(opt == 1 ? G : Gi , (jzp - 1) / (1 << dep));
+			for(int i = 0 ; i < len ; i += 1 << dep)
+			{
+				int q = 1;
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					int ui = w[i + j] , vi = 1ll * w[i + j + (1 << (dep - 1))] * q % jzp;
+					w[i + j] = add(ui , vi) , w[i + j + (1 << (dep - 1))] = add(ui , jzp - vi);
+					q = 1ll * q * base % jzp;
+				}
+			}
+		}
+		if(opt == -1)
+		{
+			int inv = quickpow(len , jzp - 2);
+			for(int i = 0 ; i < len ; ++ i) w[i] = 1ll * w[i] * inv % jzp;
+		}
+	}
+
+	inline void main()
+	{
+		f[0] = 1 , n = read() , k = read() , t = read() , Gi = quickpow(G , jzp - 2);
+		for(int i = 0 ; i < n ; ++ i) a[i] = read();
+		if(t == 0)	for(int i = 1 ; i <= n ; ++ i) f[i] = 1ll * f[i - 1] * (k + i - 1) % jzp * ni(i) % jzp;
+		else for(int i = 1 ; i <= n ; ++ i)	f[i] = 1ll * f[i - 1] * (k - i + 1) % jzp * ni(i) % jzp , f[i] = (- f[i] + jzp) % jzp;
+		// for(int i = 0 ; i <= n ; ++ i) printf("%d " , f[i]);puts("");
+		prepare(n * 2) , NTT(a , 1) , NTT(f , 1);
+		for(int i = 0 ; i < len ; ++ i) f[i] = 1ll * f[i] * a[i] % jzp;
+		NTT(f , -1); for(int i = 0 ; i < n ; ++ i) printf("%d " , f[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
