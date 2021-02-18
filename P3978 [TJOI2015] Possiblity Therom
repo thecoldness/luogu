@@ -1,0 +1,22 @@
+#include <cstdio>
+using namespace std;
+
+namespace thecold
+{
+	int n;
+
+	double ans;
+
+	inline void main()
+	{
+		scanf("%d" , &n); ans = n;
+		ans = (ans + 1) * ans / (2.0 * (2.0 * ans - 1));
+		printf("%.9lf" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
