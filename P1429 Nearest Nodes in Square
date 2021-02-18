@@ -1,0 +1,75 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	double ans = 2e9;
+
+	struct node
+	{
+		int xi , yi;
+		node(int a , int b)
+		{
+			xi = a , yi = b;
+		}
+		node(){}
+	}a[Max_n];
+
+	int n;
+
+	inline bool cmp(node a , node b)
+	{
+		if(a.xi != b.xi) return a.xi < b.xi;
+		return a.yi < b.yi;
+	}
+
+	inline void divide(const int l , const int r)
+	{
+		if(l == r) return;
+		int mid = (l + r) >> 1;
+		divide(l , mid) , divide(mid + 1 , r);
+		int lim = r;
+		for(int i = mid + 1 ; i <= r ; ++ i) if(a[i].xi - a[mid].xi >= ans) {lim = i - 1; break;}
+		for(int i = mid ; i >= l ; -- i)
+		{
+			if(a[mid].xi - a[i].xi >= ans) break;
+			for(int j = mid + 1 ; j <= lim ; ++ j)
+				ans = min(ans , hypot(a[i].xi - a[j].xi , a[i].yi - a[j].yi));
+		}
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int ui = read() , vi = read();
+			a[i] = node(ui , vi);
+		}
+		sort(a + 1 , a + n + 1 , cmp);
+		divide(1 , n); printf("%.4lf" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
