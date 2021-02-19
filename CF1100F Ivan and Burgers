@@ -1,0 +1,96 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 5e5 + 5;
+	const int Max_c = 25;
+
+	int a[Max_n] , n , q , tmp[Max_c];
+	int ans[Max_n] , base[Max_n][Max_c];
+
+	struct node
+	{
+		int l , r , bel;
+		node(const int a , const int b , const int c)
+		{
+			l = a , r = b , bel = c;
+			if(l > r) swap(l , r);
+		}
+		node(){}
+	}opt[20][Max_n];
+
+	inline void insert(int x , int* bel)
+	{
+		for(int i = 21 ; i >= 0 ; -- i)
+			if(x & (1 << i))
+			{
+				if(!bel[i]) {bel[i] = x; break;}
+				x ^= bel[i];
+			}
+	}
+
+	void solve(const int l , const int r , const int ql , const int qr , const int dep)
+	{
+		if(ql > qr) return;
+		if(l == r)
+		{
+			for(int i = ql ; i <= qr ; ++ i) ans[opt[dep][i].bel] = a[l];
+			return;
+		}
+		int mid = (l + r) >> 1 , tl = ql - 1 , tr = qr + 1;
+		for(int i = l ; i <= r ; ++ i) memset(base[i] , 0 , sizeof(base[i]));
+		insert(a[mid] , base[mid]) , insert(a[mid + 1] , base[mid + 1]);
+		for(int i = mid - 1 ; i >= l ; -- i)
+		{
+			memcpy(base[i] , base[i + 1] , sizeof(base[i]));
+			insert(a[i] , base[i]);
+		}
+		for(int i = mid + 2 ; i <= r ; ++ i)
+		{
+			memcpy(base[i] , base[i - 1] , sizeof(base[i]));
+			insert(a[i] , base[i]);
+		}
+		for(int i = ql ; i <= qr ; ++ i)
+			if(opt[dep][i].l > mid) opt[dep + 1][-- tr] = opt[dep][i];
+			else if(opt[dep][i].r <+ mid) opt[dep + 1][ ++ tl] = opt[dep][i];
+			else
+			{
+				int bel = opt[dep][i].bel , li = opt[dep][i].l , ri = opt[dep][i].r;
+				memcpy(tmp , base[li] , sizeof(tmp));
+				for(int i = 21 ; i >= 0 ; -- i) if(base[ri][i]) insert(base[ri][i] , tmp);
+				for(int i = 21 ; i >= 0 ; -- i) ans[bel] = max(ans[bel] , ans[bel] ^ tmp[i]);
+			}
+		solve(l , mid , ql , tl , dep + 1) , solve(mid + 1 , r , tr , qr , dep + 1);
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read();
+		q = read();
+		for(int i = 1 ; i <= q ; ++ i) 	opt[0][i] = node(read() , read() , i);
+		solve(1 , n , 1 , q , 0);
+		for(int i = 1 ; i <= q ; ++ i) printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
