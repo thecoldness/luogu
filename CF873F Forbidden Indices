@@ -1,0 +1,56 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	const int Max_n = 2e5 + 5;
+
+	int ch[Max_n << 1][28] , link[Max_n << 1] , siz[Max_n << 1];
+	int n , lst , tot = 1 , len[Max_n << 1];
+
+	char c[Max_n] , b[Max_n];
+
+	inline int insert(const int x , const int val)
+	{
+		int newpos = ++ tot , p = lst , q , clone; 
+		len[newpos] = len[lst] + 1 , siz[newpos] += val;
+		while(p && !ch[p][x]) ch[p][x] = newpos , p = link[p];
+		if(!p) return link[newpos] = 1 , newpos;
+		q = ch[p][x];
+		if(len[q] == len[p] + 1) return link[newpos] = q , newpos;
+		clone = ++ tot; len[clone] = len[p] + 1;
+		link[clone] = link[q] , link[q] = link[newpos] = clone;
+		memcpy(ch[clone] , ch[q] , sizeof(ch[clone]));
+		while(p && ch[p][x] == q) ch[p][x] = clone , p = link[p];
+		return newpos;
+	}
+
+	int buk[Max_n] , ord[Max_n];
+
+	inline void main()
+	{
+		scanf("%d" , &n) , scanf("%s" , c + 1) , scanf("%s" , b + 1);
+		lst = 1;// bug
+		for(int i = 1 ; i <= n ; ++ i) lst = insert(c[i] - 'a' , b[i] == '0');
+		for(int i = 1 ; i <= tot ; ++ i) ++ buk[len[i]];
+		for(int i = 1 ; i <= n ; ++ i) buk[i] += buk[i - 1];
+		for(int i = 1 ; i <= tot ; ++ i)
+			ord[buk[len[i]] --] = i;
+		long long ans = 0;
+		for(int i = tot ; i ; -- i)
+		{
+			int now = ord[i];
+			ans = max(ans , 1ll * len[now] * siz[now]); siz[link[now]] += siz[now];
+		}
+		// for(int i = 1 ; i <= tot ; ++ i) printf("%d %d\n" , ch[i][0] , ch[i][1]);
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
