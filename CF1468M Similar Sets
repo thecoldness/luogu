@@ -1,0 +1,124 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 4e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+
+	int n , tot , lsh[Max_n] , t , len , in[Max_n];
+	int head[Max_n];
+
+	vector<int> v[Max_n] , s[Max_n];
+
+	inline int find(const int x)
+	{
+		return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+	}
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+		++ in[x] , ++ in[y];
+	}
+
+	int p[Max_n] , ord[Max_n] , st[Max_n] , tp , cnt[Max_n];
+
+	inline bool cmp(const int a , const int b)
+	{
+		if(in[a] != in[b]) return in[a] < in[b];
+		return a < b;
+	}
+
+	inline void main()
+	{
+		t = read();
+		while(t --)
+		{
+			for(int i = 1 ; i <= n + len ; ++ i) head[i] = in[i] = 0 , v[i].clear();
+			for(int i = 1 ; i <= n ; ++ i) s[i].clear();
+			n = read() , len = 0;
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				int sz = read();
+				for(int j = 1 ; j <= sz ; ++ j)
+					s[i].push_back(lsh[ ++ len] = read());
+			}
+			sort(lsh + 1 , lsh + len + 1) , len = unique(lsh + 1 , lsh + len + 1) - lsh;
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				int sz = s[i].size();
+				for(int j = 0 ; j < sz ; ++ j)
+					add_edge(i , find(s[i][j]) + n);
+			}
+			for(int i = 1 ; i <= n + len ; ++ i) p[i] = i;
+			sort(p + 1 , p + n + len , cmp);
+			for(int i = 1 ; i < n + len ; ++ i) ord[p[i]] = i;
+			for(int now = 1 ; now < n + len ; ++ now)
+			{
+				for(int i = head[now] ; i ; i = edge[i].nex)
+				{
+					int nex = edge[i].to;
+					if(ord[nex] > ord[now]) v[now].push_back(nex);
+				}
+			}
+			bool found = false;
+			for(int now = 1 ; now < n + len ; ++ now)
+			{
+				while(tp) cnt[st[tp]] = 0 , -- tp;
+				for(int i = head[now] ; i ; i = edge[i].nex)
+				{
+					int nex = edge[i].to , sz = v[nex].size();
+					for(int j = 0 ; j < sz ; ++ j)
+					{
+						int to = v[nex][j]; if(ord[to] <= ord[now]) continue;
+						if(cnt[to])
+						{
+							found = true;
+							if(now <= n) printf("%d " , now);
+							if(nex <= n) printf("%d " , nex);
+							if(to <= n) printf("%d " , to);
+							if(cnt[to] <= n) printf("%d " , cnt[to]);
+							puts(""); break;
+						}
+						else cnt[to] = nex , st[ ++ tp] = to;
+					}
+					if(found) break;
+				}
+				if(found) break;
+			}
+			if(!found) puts("-1");
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
