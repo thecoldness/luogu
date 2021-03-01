@@ -1,0 +1,63 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	map<int , int> son[Max_n << 1];
+
+	int tot = 1 , link[Max_n << 1] , len[Max_n << 1] , lst = 1;
+
+	long long ans;
+
+	inline void insert(const int ch)
+	{
+		int p = lst , newpos = ++ tot;
+		len[newpos] = len[p] + 1; 
+		// while(p && son[p].find(ch) == son[p].end()) p = link[p];bug
+		while(p && son[p].find(ch) == son[p].end()) son[p][ch] = newpos , p = link[p];
+		lst = newpos;
+		if(!p) return link[newpos] = 1 , void();
+		int q = son[p][ch];
+		if(len[q] == len[p] + 1) return link[newpos] = q , void();
+		int clone = ++ tot; len[clone] = len[p] + 1;
+		son[clone] = son[q]; 
+		link[clone] = link[q] , link[q] = link[newpos] = clone;
+		while(p && son[p][ch] == q) son[p][ch] = clone , p = link[p];
+	}
+
+	inline void main()
+	{
+		int n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			insert(read());
+			ans += len[lst] - len[link[lst]];
+			// for(int now = 1 ; now <= tot ; ++ now) printf("%d " , len[now]); puts("");
+			// printf("%d %d\n" , lst , link[lst]);
+			printf("%lld\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
